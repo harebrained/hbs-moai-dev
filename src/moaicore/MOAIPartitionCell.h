@@ -5,7 +5,7 @@
 #define	MOAIPARTITIONCELL_H
 
 class MOAIPartition;
-class MOAIPartitionLayer;
+class MOAIPartitionLevel;
 class MOAIPartitionResultBuffer;
 class MOAIProp;
 
@@ -16,19 +16,22 @@ class MOAIPartitionCell {
 private:
 	
 	friend class MOAIPartition;
-	friend class MOAIPartitionLayer;
+	friend class MOAIPartitionLevel;
 	friend class MOAIProp;
 	
-	typedef USLeanList < MOAIProp* >::Iterator PrimIt;
-	USLeanList < MOAIProp* > mPrims;
+	typedef USLeanList < MOAIProp* >::Iterator PropIt;
+	USLeanList < MOAIProp* > mProps;
 
 	//----------------------------------------------------------------//
 	void			Clear					();
-	void			GatherProps				( MOAIPartitionResultBuffer& results, MOAIProp* ignore, u32 mask );
-	void			GatherProps				( MOAIPartitionResultBuffer& results, MOAIProp* ignore, USVec2D& point, u32 mask );
-	void			GatherProps				( MOAIPartitionResultBuffer& results, MOAIProp* ignore, USRect& rect, u32 mask );
+	void			ExtractProps			( MOAIPartitionCell& cell, MOAIPartitionLevel* layer );
+	void			GatherProps				( MOAIPartitionResultBuffer& results, const MOAIProp* ignore, u32 mask );
+	void			GatherProps				( MOAIPartitionResultBuffer& results, const MOAIProp* ignore, const USVec3D& point, u32 mask );
+	void			GatherProps				( MOAIPartitionResultBuffer& results, const MOAIProp* ignore, const USBox& box, u32 mask );
+	void			GatherProps				( MOAIPartitionResultBuffer& results, const MOAIProp* ignore, const USFrustum& frustum, u32 mask );
 	void			InsertProp				( MOAIProp& prop );
 	void			RemoveProp				( MOAIProp& prop );
+	void			ScheduleProps			(); // schedule all props in cell for update
 					
 public:
 

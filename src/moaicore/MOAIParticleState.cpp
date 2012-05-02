@@ -211,18 +211,18 @@ void MOAIParticleState::ClearForces () {
 		ForceNode* forceNode = this->mForces.Head ();
 		this->mForces.PopFront ();
 		
-		this->LuaRelease ( *forceNode->Data ());
+		this->LuaRelease ( forceNode->Data ());
 		delete forceNode;
 	}
 }
 
 //----------------------------------------------------------------//
-void MOAIParticleState::GatherForces ( USVec2D& loc, USVec2D& velocity, float mass, float step ) {
+void MOAIParticleState::GatherForces ( USVec3D& loc, USVec3D& velocity, float mass, float step ) {
 
-	USVec2D result;
+	USVec3D result;
 
-	USVec2D acceleration ( 0.0f, 0.0f );
-	USVec2D offset ( 0.0f, 0.0f );
+	USVec3D acceleration ( 0.0f, 0.0f, 0.0f );
+	USVec3D offset ( 0.0f, 0.0f, 0.0f );
 		
 	ForceNode* forceNode = this->mForces.Head ();
 	for ( ; forceNode; forceNode = forceNode->Next ()) {
@@ -290,7 +290,7 @@ MOAIParticleState::~MOAIParticleState () {
 //----------------------------------------------------------------//
 void MOAIParticleState::PushForce ( MOAIParticleForce& force ) {
 
-	this->LuaRetain ( force );
+	this->LuaRetain ( &force );
 
 	ForceNode* forceNode = new ForceNode ();
 	forceNode->Data ( &force );
@@ -337,26 +337,23 @@ void MOAIParticleState::ProcessParticle ( MOAIParticleSystem& system, MOAIPartic
 	
 	float* r = particle.mData;
 	
-//	USVec2D loc;
-//	USVec2D vel;
-//	
-//	loc.mX = r [ MOAIParticle::PARTICLE_X ];
-//	loc.mY = r [ MOAIParticle::PARTICLE_Y ];
-//	vel.mX = r [ MOAIParticle::PARTICLE_DX ];
-//	vel.mY = r [ MOAIParticle::PARTICLE_DY ];
+	USVec3D loc;
+	USVec3D vel;
 	
-//	this->GatherForces ( loc, vel, particle.mMass, step );
+	loc.mX = r [ MOAIParticle::PARTICLE_X ];
+	loc.mY = r [ MOAIParticle::PARTICLE_Y ];
+	loc.mZ = 0.0f;
 	
-//	r [ MOAIParticle::PARTICLE_X ]	= loc.mX;
-//	r [ MOAIParticle::PARTICLE_Y ]	= loc.mY;
-//	r [ MOAIParticle::PARTICLE_DX ]	= vel.mX;
-//	r [ MOAIParticle::PARTICLE_DY ]	= vel.mY;
+	vel.mX = r [ MOAIParticle::PARTICLE_DX ];
+	vel.mY = r [ MOAIParticle::PARTICLE_DY ];
+	vel.mZ = 0.0f;
 	
-	// Nasty trickery here using the fact that the particle registers have the same binary layout as
-	// two USVec2D instances. We avoid 4 reads and 4 writes just to pass it to GatherForces()
-	USVec2D& loc = *(USVec2D *)(&r[MOAIParticle::PARTICLE_X]);
-	USVec2D& vel = *(USVec2D *)(&r[MOAIParticle::PARTICLE_DX]);
 	this->GatherForces ( loc, vel, particle.mMass, step );
+	
+	r [ MOAIParticle::PARTICLE_X ]	= loc.mX;
+	r [ MOAIParticle::PARTICLE_Y ]	= loc.mY;
+	r [ MOAIParticle::PARTICLE_DX ]	= vel.mX;
+	r [ MOAIParticle::PARTICLE_DY ]	= vel.mY;
 
 	if ( this->mRender ) {
 		this->mRender->Run ( system, particle, t0, t1 );

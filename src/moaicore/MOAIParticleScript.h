@@ -60,19 +60,19 @@ private:
 	enum {
 		END = 0,
 		ADD,
-		ANGLE_VEC,
-		ATAN2ROT,
+		COS,
 		CYCLE,
 		DIV,
 		EASE,
 		EASE_DELTA,
 		MUL,
-		NORM,
 		RAND,
 		RAND_VEC,
 		SET,
+		SIN,
 		SPRITE,
 		SUB,
+		TAN,
 		TIME,
 		VEC_ANGLE,
 		WRAP,
@@ -106,21 +106,21 @@ private:
 
 	//----------------------------------------------------------------//
 	static int		_add				( lua_State* L );
-	static int		_angleVec			( lua_State* L );
-	static int		_atan2rot			( lua_State* L );
+	static int		_cos				( lua_State* L );
 	static int		_cycle				( lua_State* L );
 	static int		_div				( lua_State* L );
 	static int		_ease				( lua_State* L );
 	static int		_easeDelta			( lua_State* L );
 	static int		_mul				( lua_State* L );
-	static int		_norm				( lua_State* L );
 	static int		_packConst			( lua_State* L );
 	static int		_packReg			( lua_State* L );
 	static int		_rand				( lua_State* L );
 	static int		_randVec			( lua_State* L );
 	static int		_set				( lua_State* L );
+	static int		_sin				( lua_State* L );
 	static int		_sprite				( lua_State* L );
 	static int		_sub				( lua_State* L );
+	static int		_tan				( lua_State* L );
 	static int		_time				( lua_State* L );
 	static int		_vecAngle			( lua_State* L );
 	static int		_wrap				( lua_State* L );

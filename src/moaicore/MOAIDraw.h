@@ -6,7 +6,7 @@
 
 #include <moaicore/MOAILua.h>
 
-class MOAITexture;
+class MOAITextureBase;
 
 //================================================================//
 // MOAIDraw
@@ -35,6 +35,7 @@ private:
 	
 	//----------------------------------------------------------------//
 	static void			DrawLuaParams			( lua_State* L, u32 primType );
+	static void			DrawLuaArray			( lua_State* L, u32 primType );
 
 public:
 
@@ -58,8 +59,8 @@ public:
 	static void			DrawRectFill			( float left, float top, float right, float bottom );
 	static void			DrawRectOutline			( USRect& rect );
 	static void			DrawRectOutline			( float left, float top, float right, float bottom );
-	static void			DrawVertexArray			( const USVec2D* verts, u32 count, u32 color, u32 primType );
-	static void			DrawVertexArray			( const float* verts, u32 count, u32 color, u32 primType );
+	static void			DrawVertexArray			( const USVec3D* verts, u32 count, u32 color, u32 primType );
+	static void			DrawVertexArray2D		( const float* verts, u32 count, u32 color, u32 primType );
 						MOAIDraw				();
 						~MOAIDraw				();
 	void				RegisterLuaClass		( MOAILuaState& state );

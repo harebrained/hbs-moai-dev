@@ -22,6 +22,7 @@ bool USFileSys::AffirmPath ( cc8* path ) {
 bool USFileSys::CheckFileExists ( cc8* path ) {
 
 	zipfs_stat fileStat;
+	
 	if( USFileSys::GetFileStat ( path, fileStat ) ) {
 		return ( fileStat.mExists != 0 && fileStat.mIsDir == 0 );
 	}
@@ -32,6 +33,7 @@ bool USFileSys::CheckFileExists ( cc8* path ) {
 bool USFileSys::CheckPathExists ( cc8* path ) {
 
 	zipfs_stat fileStat;
+	
 	if( USFileSys::GetFileStat ( path, fileStat ) ) {
 		return ( fileStat.mExists != 0 && fileStat.mIsDir != 0 );
 	}
@@ -63,8 +65,8 @@ bool USFileSys::DeleteDirectory ( cc8* path, bool force, bool recursive ) {
 	if ( recursive ) {
 		dirItr.Start ();
 		while ( dirItr.NextDirectory ()) {
-			if( strcmp(dirItr.Current(), "..") == 0 ||
-			   strcmp(dirItr.Current(), ".") == 0 ) {
+			if( strcmp ( dirItr.Current (), ".." ) == 0 ||
+				strcmp ( dirItr.Current (), "." ) == 0 ) {
 				continue;
 			}
 			USFileSys::DeleteDirectory ( dirItr.Current (), force, recursive );

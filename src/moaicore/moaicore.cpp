@@ -25,6 +25,10 @@ extern "C" {
 	#include <openssl/ssl.h>
 #endif
 
+#if USE_ARES
+	#include <ares.h>
+#endif
+
 //----------------------------------------------------------------//
 // TODO: this should be part of the unit tests
 static void _typeCheck () {
@@ -53,20 +57,29 @@ void moaicore::InitGlobals ( MOAIGlobals* globals ) {
 
 	MOAIGlobalsMgr::Set ( globals );
 
-	MOAIUrlMgr::Affirm ();
+	MOAILuaRuntime::Affirm ();
+	MOAILogMgr::Affirm ();
+	MOAIGfxDevice::Affirm ();
+	
+	#if USE_CURL
+		MOAIUrlMgrCurl::Affirm ();
+	#endif
+	
+	#if MOAI_OS_NACL
+		MOAIUrlMgrNaCl::Affirm ();
+	#endif
+	
 	MOAIXmlParser::Affirm ();
 	MOAIActionMgr::Affirm ();
 	MOAIInputMgr::Affirm ();
-	MOAILogMgr::Affirm ();
 	MOAINodeMgr::Affirm ();
 	MOAIVertexFormatMgr::Affirm ();
 	MOAIShaderMgr::Affirm ();
-	MOAIGfxDevice::Affirm ();
 	MOAIDraw::Affirm ();
 	MOAIDebugLines::Affirm ();
 	MOAIPartitionResultMgr::Affirm ();
 	MOAISim::Affirm ();
-	MOAILuaRuntime::Affirm ();
+	MOAIRenderMgr::Affirm ();
 	
 	// Start Lua
 	MOAILuaRuntime& luaRuntime = MOAILuaRuntime::Get ();
@@ -80,7 +93,9 @@ void moaicore::InitGlobals ( MOAIGlobals* globals ) {
 	REGISTER_LUA_CLASS ( MOAIActionMgr )
 	REGISTER_LUA_CLASS ( MOAIAnim )
 	REGISTER_LUA_CLASS ( MOAIAnimCurve )
+	REGISTER_LUA_CLASS ( MOAIBitmapFontReader )
 	REGISTER_LUA_CLASS ( MOAIButtonSensor )
+	REGISTER_LUA_CLASS ( MOAICamera )
 	REGISTER_LUA_CLASS ( MOAICameraAnchor2D )
 	REGISTER_LUA_CLASS ( MOAICameraFitter2D )
 	REGISTER_LUA_CLASS ( MOAIColor )
@@ -92,11 +107,13 @@ void moaicore::InitGlobals ( MOAIGlobals* globals ) {
 	REGISTER_LUA_CLASS ( MOAIDeckRemapper )
 	REGISTER_LUA_CLASS ( MOAIDeserializer )
 	REGISTER_LUA_CLASS ( MOAIDraw )
+	REGISTER_LUA_CLASS ( MOAIGlyphCache )
 	REGISTER_LUA_CLASS ( MOAIEnvironment )
 	REGISTER_LUA_CLASS ( MOAIEaseDriver )
 	REGISTER_LUA_CLASS ( MOAIEaseType )
 	REGISTER_LUA_CLASS ( MOAIFileSystem )
 	REGISTER_LUA_CLASS ( MOAIFont )
+	REGISTER_LUA_CLASS ( MOAIFrameBuffer )
 	REGISTER_LUA_CLASS ( MOAIGfxDevice )
 	REGISTER_LUA_CLASS ( MOAIGfxQuad2D )
 	REGISTER_LUA_CLASS ( MOAIGfxQuadDeck2D )
@@ -104,21 +121,23 @@ void moaicore::InitGlobals ( MOAIGlobals* globals ) {
 	REGISTER_LUA_CLASS ( MOAIGrid )
 	REGISTER_LUA_CLASS ( MOAIGridSpace )
 	REGISTER_LUA_CLASS ( MOAIGridPathGraph )
-	REGISTER_LUA_CLASS ( MOAIHttpTask )
+
 	REGISTER_LUA_CLASS ( MOAIImage )
+	REGISTER_LUA_CLASS ( MOAIImageTexture )
 	REGISTER_LUA_CLASS ( MOAIIndexBuffer )
 	REGISTER_LUA_CLASS ( MOAIInputDevice )
 	REGISTER_LUA_CLASS ( MOAIInputMgr )
 	REGISTER_LUA_CLASS ( MOAIJoystickSensor )
 	REGISTER_LUA_CLASS ( MOAIJsonParser )
 	REGISTER_LUA_CLASS ( MOAIKeyboardSensor )
-	REGISTER_LUA_CLASS ( MOAILayer2D )
-	REGISTER_LUA_CLASS ( MOAILayerBridge2D )
+	REGISTER_LUA_CLASS ( MOAILayer )
+	REGISTER_LUA_CLASS ( MOAILayerBridge )
 	//REGISTER_LUA_CLASS ( MOAILayoutFrame )
 	REGISTER_LUA_CLASS ( MOAILocationSensor )
 	REGISTER_LUA_CLASS ( MOAILogMgr )
 	REGISTER_LUA_CLASS ( MOAIMesh )
 	REGISTER_LUA_CLASS ( MOAIMotionSensor )
+	REGISTER_LUA_CLASS ( MOAIMultiTexture )
 	REGISTER_LUA_CLASS ( MOAIParser )
 	REGISTER_LUA_CLASS ( MOAIParticleDistanceEmitter )
 	REGISTER_LUA_CLASS ( MOAIParticleForce )
@@ -133,16 +152,19 @@ void moaicore::InitGlobals ( MOAIGlobals* globals ) {
 	REGISTER_LUA_CLASS ( MOAIPexPlugin )
 	REGISTER_LUA_CLASS ( MOAIPointerSensor )
 	REGISTER_LUA_CLASS ( MOAIProp )
-	REGISTER_LUA_CLASS ( MOAIProp2D )
+	REGISTER_LUA_CLASS ( MOAIRenderMgr )
 	REGISTER_LUA_CLASS ( MOAIScriptDeck )
 	REGISTER_LUA_CLASS ( MOAIScriptNode )
 	REGISTER_LUA_CLASS ( MOAISerializer )
 	REGISTER_LUA_CLASS ( MOAIShader )
+	REGISTER_LUA_CLASS ( MOAIShaderMgr )
 	REGISTER_LUA_CLASS ( MOAISim )
+	REGISTER_LUA_CLASS ( MOAIStaticGlyphCache )
 	REGISTER_LUA_CLASS ( MOAIStretchPatch2D )
 	REGISTER_LUA_CLASS ( MOAISurfaceDeck2D )
 	REGISTER_LUA_CLASS ( MOAITextBox )
 	REGISTER_LUA_CLASS ( MOAITextBundle )
+	REGISTER_LUA_CLASS ( MOAITextStyle )
 	REGISTER_LUA_CLASS ( MOAITexture )
 	REGISTER_LUA_CLASS ( MOAITileDeck2D )
 	REGISTER_LUA_CLASS ( MOAITimer )
@@ -182,10 +204,17 @@ void moaicore::InitGlobals ( MOAIGlobals* globals ) {
 		REGISTER_LUA_CLASS ( MOAICpSpace )
 	#endif
 	
-	// TODO: for back compat; remove in next release
-	MOAILuaStateHandle state = MOAILuaRuntime::Get ().State ();
-	lua_getglobal ( state, "MOAICoroutine" );
-	lua_setglobal ( state, "MOAIThread" );
+	#if USE_FREETYPE
+		REGISTER_LUA_CLASS ( MOAIFreeTypeFontReader )
+	#endif
+
+	#if USE_CURL
+		REGISTER_LUA_CLASS ( MOAIHttpTaskCurl )
+	#endif
+
+	#if MOAI_OS_NACL
+		REGISTER_LUA_CLASS ( MOAIHttpTaskNaCl )
+	#endif
 }
 
 //----------------------------------------------------------------//
@@ -228,6 +257,10 @@ void moaicore::SystemInit () {
 		SSL_library_init ();
 	#endif
 
+	#if USE_ARES
+		ares_set_default_dns_addr ( 0x08080808 );
+	#endif
+	
 	#if USE_CURL
 		curl_global_init ( CURL_GLOBAL_WIN32 | CURL_GLOBAL_SSL );
 	#endif

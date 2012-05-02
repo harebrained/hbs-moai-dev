@@ -116,10 +116,15 @@ bool MOAICoroutine::IsDone () {
 }
 
 //----------------------------------------------------------------//
+STLString MOAICoroutine::GetDebugInfo () const {
+	return mFuncName;
+}
+
+//----------------------------------------------------------------//
 MOAICoroutine::MOAICoroutine () :
 	mState ( 0 ),
 	mNarg ( 0 ),
-	mIsFirstRun(true) {
+	mIsFirstRun ( true ) {
 
 	RTTI_SINGLE ( MOAIAction )
 }
@@ -133,7 +138,7 @@ void MOAICoroutine::OnUpdate ( float step ) {
 	UNUSED ( step );
 	
 	if ( this->mState ) {
-
+		
 		int result;
 		
 		if ( this->mIsFirstRun ) {
@@ -141,10 +146,10 @@ void MOAICoroutine::OnUpdate ( float step ) {
 			this->mNarg = 0;
 			this->mIsFirstRun = false;
 		}
-		else {
-			// Pass the step value as the return result from coroutine.yield()
-			lua_pushnumber( this->mState, step );
-			result = lua_resume ( this->mState, 1 );
+		else {	
+			// Pass the step value as the return result from coroutine.yield ()
+			lua_pushnumber ( this->mState, step );
+			result = lua_resume ( this->mState, 1 );	
 		}
 		
 		if ( this->IsActive ()) {
@@ -178,12 +183,6 @@ void MOAICoroutine::OnStop () {
 		this->ClearLocal ( this->mRef );
 		this->mState = 0;
 	}
-}
-
-//----------------------------------------------------------------//
-STLString MOAICoroutine::GetDebugInfo () const {
-	
-	return mFuncName;
 }
 
 //----------------------------------------------------------------//

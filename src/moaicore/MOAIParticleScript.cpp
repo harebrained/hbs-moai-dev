@@ -225,8 +225,17 @@ int MOAIParticleScript::_add ( lua_State* L ) {
 	IMPL_LUA_PARTICLE_OP ( ADD, "RVV" )
 }
 
-int MOAIParticleScript::_angleVec ( lua_State* L ) {
-	IMPL_LUA_PARTICLE_OP ( ANGLE_VEC, "RRV" )
+//----------------------------------------------------------------//
+/**	@name	cos
+ @text	r0 = cos(v0)
+ 
+ @in		MOAIParticleScript self
+ @in		number r0
+ @in		number v0
+ @out	nil
+ */
+int MOAIParticleScript::_cos ( lua_State* L ) {
+	IMPL_LUA_PARTICLE_OP ( COS, "RV" )
 }
 
 //----------------------------------------------------------------//
@@ -303,24 +312,6 @@ int MOAIParticleScript::_easeDelta ( lua_State* L ) {
 int MOAIParticleScript::_mul ( lua_State* L ) {
 	IMPL_LUA_PARTICLE_OP ( MUL, "RVV" )
 }
-
-//----------------------------------------------------------------//
-/**	@name	norm
-	@text	r0 = v0 / |v|
-	@text	r1 = v1 / |v|
-	@text	Where |v| == sqrt( v0^2 + v1^2)
-	
-	@in		MOAIParticleScript self
-	@in		number r0
-	@in		number r1
-	@in		number v0
-	@in		number v1
-	@out	nil
-*/
-int MOAIParticleScript::_norm ( lua_State* L ) {
-	IMPL_LUA_PARTICLE_OP ( NORM, "RRVV" )
-}
-
 
 //----------------------------------------------------------------//
 /**	@name	packConst
@@ -402,6 +393,19 @@ int MOAIParticleScript::_set ( lua_State* L ) {
 }
 
 //----------------------------------------------------------------//
+/**	@name	sin
+ @text	r0 = sin(v0)
+ 
+ @in		MOAIParticleScript self
+ @in		number r0
+ @in		number v0
+ @out	nil
+ */
+int MOAIParticleScript::_sin ( lua_State* L ) {
+	IMPL_LUA_PARTICLE_OP ( SIN, "RV" )
+}
+
+//----------------------------------------------------------------//
 /**	@name	sprite
 	@text	Push a new sprite for rendering. To render a particle, first
 			call 'sprite' to create a new sprite at the particle's location.
@@ -427,6 +431,19 @@ int MOAIParticleScript::_sprite ( lua_State* L ) {
 */
 int MOAIParticleScript::_sub ( lua_State* L ) {
 	IMPL_LUA_PARTICLE_OP ( SUB, "RVV" )
+}
+
+//----------------------------------------------------------------//
+/**	@name	tan
+ @text	r0 = tan(v0)
+ 
+ @in		MOAIParticleScript self
+ @in		number r0
+ @in		number v0
+ @out	nil
+ */
+int MOAIParticleScript::_tan ( lua_State* L ) {
+	IMPL_LUA_PARTICLE_OP ( TAN, "RV" )
 }
 
 //----------------------------------------------------------------//
@@ -606,18 +623,19 @@ void MOAIParticleScript::RegisterLuaFuncs ( MOAILuaState& state ) {
 	
 	luaL_Reg regTable [] = {
 		{ "add",				_add },
-		{ "angleVec",			_angleVec },
+		{ "cos",				_cos },
 		{ "cycle",				_cycle },
 		{ "div",				_div },
 		{ "ease",				_ease },
 		{ "easeDelta",			_easeDelta },
 		{ "mul",				_mul },
-		{ "norm",				_norm },
 		{ "rand",				_rand },
 		{ "randVec",			_randVec },
 		{ "set",				_set },
+		{ "sin",				_sin },
 		{ "sprite",				_sprite },
 		{ "sub",				_sub },
+		{ "tan",				_tan },
 		{ "time",				_time },
 		{ "vecAngle",			_vecAngle },
 		{ "wrap",				_wrap },
@@ -679,16 +697,16 @@ void MOAIParticleScript::Run ( MOAIParticleSystem& system, MOAIParticle& particl
 					*r0 = v0 + v1;
 				}
 				break;
-			case ANGLE_VEC: // RRV
-				READ_ADDR ( r0, bytecode );
-				READ_ADDR ( r1, bytecode );
-				READ_VALUE ( v0, bytecode );
 
-				if( r0 && r1){
-					*r0 = (float)( Cos ( v0 * (float)D2R ) );
-					*r1 = (float)( Sin ( v0 * (float)D2R ) );
+			case COS: // RVV
+				READ_ADDR   ( r0, bytecode );
+				READ_VALUE  ( v0, bytecode );
+				
+				if ( r0 ) {
+					*r0 = ( float )( cos ( v0 ) );
 				}
 				break;
+
 			case CYCLE: // RVVV
 				
 				READ_ADDR	( r0, bytecode );
@@ -763,26 +781,7 @@ void MOAIParticleScript::Run ( MOAIParticleSystem& system, MOAIParticle& particl
 					*r0 = v0 * v1;
 				}
 				break;
-			case NORM:
-				READ_ADDR ( r0, bytecode );
-				READ_ADDR ( r1, bytecode );
-				READ_VALUE ( v0, bytecode );
-				READ_VALUE ( v1, bytecode );
-
-				if( r0 && r1){
-					v3 = Sqrt( (v0 * v0 ) + (v1 * v1) );
-					if(v3)
-					{
-						*r0 = (float)( v0 / v3 );
-						*r1 = (float)( v1 / v3 );
-					}
-					else
-					{
-						*r0 = 0;
-						*r1 = 0;
-					}
-				}
-				break;
+			
 			case RAND: // RVV
 				
 				READ_ADDR	( r0, bytecode );
@@ -822,7 +821,16 @@ void MOAIParticleScript::Run ( MOAIParticleSystem& system, MOAIParticle& particl
 					*r0 = v0;
 				}
 				break;
-			
+			case SIN: // RV
+
+				READ_ADDR   ( r0, bytecode );
+				READ_VALUE  ( v0, bytecode );
+				
+				if ( r0 ) {
+					*r0 = ( float )( sin ( v0 ) );
+				}
+				break;
+
 			case SPRITE: //
 				
 				if ( push ) {
@@ -842,8 +850,18 @@ void MOAIParticleScript::Run ( MOAIParticleSystem& system, MOAIParticle& particl
 					*r0 = v0 - v1;
 				}
 				break;
-			
-			case TIME: // R
+
+			case TAN: // RV
+
+				READ_ADDR   ( r0, bytecode );
+				READ_VALUE  ( v0, bytecode );
+				
+				if ( r0 ) {
+					*r0 = ( float )( tan ( v0 ) );
+				}
+				break;
+
+			case TIME: // RVV
 				
 				READ_ADDR	( r0, bytecode );
 				

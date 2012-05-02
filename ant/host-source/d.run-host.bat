@@ -7,7 +7,7 @@
 	@echo off
 	setlocal
 	set CYGWIN=nodosfilewarning
-	call bash run.sh
+	bash run-host.sh %*
 
 	if %ERRORLEVEL% == 2 (
 		set install_cmd=ant release install
@@ -17,11 +17,11 @@
 	)
 
 	if %ERRORLEVEL% == 0 (
-		pushd build
+		pushd build\project
 			call ant uninstall 
 			call ant clean
 			call %install_cmd%
-			call adb shell am start -a android.intent.action.MAIN -n @SETTING_PACKAGE@/@SETTING_PACKAGE@.MoaiActivity
+			call adb shell am start -a android.intent.action.MAIN -n com.distinctdev.tmt2/com.distinctdev.tmt2.MoaiActivity
 			call adb logcat -c
 			call adb logcat MoaiLog:V AndroidRuntime:E *:S
 		popd

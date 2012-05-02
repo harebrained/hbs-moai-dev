@@ -115,7 +115,7 @@ int MOAIFileSystem::_deleteFile ( lua_State* L ) {
 int MOAIFileSystem::_getAbsoluteDirectoryPath ( lua_State* L ) {
 	MOAILuaState state ( L );
 	
-	cc8* path = state.GetValue < cc8* >( 2, "" );
+	cc8* path = state.GetValue < cc8* >( 1, "" );
 	STLString result = USFileSys::GetAbsoluteDirPath ( path );
 	
 	lua_pushstring ( state, result );
@@ -141,6 +141,13 @@ int MOAIFileSystem::_getAbsoluteFilePath ( lua_State* L ) {
 }
 
 //----------------------------------------------------------------//
+/**	@name	getRelativePath
+	@text	Given an absolute path returns the relative path
+			in relation to the current working directory.
+
+	@in		string path
+	@out	string path
+-*/
 int MOAIFileSystem::_getRelativePath ( lua_State* L ) {
 	MOAILuaState state ( L );
 	
@@ -192,10 +199,12 @@ int MOAIFileSystem::_listDirectories ( lua_State* L ) {
 	int n = 0;
 	dirItr.Start ();
 	while ( dirItr.NextDirectory ()) {
+
 		if( strcmp(dirItr.Current(), "..") == 0 ||
-			strcmp(dirItr.Current(), ".") == 0 ) {
-			continue;
+			strcmp(dirItr.Current(), ".") == 0 ) {	
+			continue;	
 		}
+
 		if ( dir ) {
 			lua_pushstring ( L, dir );
 			lua_pushstring ( L, "/" );

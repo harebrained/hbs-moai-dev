@@ -3,7 +3,7 @@
 //  Part of UNTZ
 //
 //  Created by Zach Saul (zach@retronyms.com) on 06/01/2011.
-//  Copyright 2011 Retronyms. All rights reserved.
+//  Copyright (c) 2010-2011 Zipline Games, Inc. All Rights Reserved.
 //
 
 #include "UntzSystem.h"
@@ -71,7 +71,6 @@ UInt32 IosSystemData::getNumOutputChannels()
     return mAudioFormat.mChannelsPerFrame;
 }
 
-
 static inline SInt16 limit_float_conv_SInt16(float inValue)
 {
 //	const float twoOverPi = 2.0f / 3.14f;
@@ -111,10 +110,11 @@ static OSStatus playbackCallback(void *userData,
     sysData->mMixer.process(0, NULL, 2, out_bufs, framesPerBuffer);
 	
 	float volume = sysData->mMixer.getVolume();
-
+	
     // Clip nicely.
-//    for(int i=0; i< outBuffer->mBuffers[0].mNumberChannels; i++)
-//        limit_float(&sysData->mOutputBuffer[i*framesPerBuffer], framesPerBuffer);
+	// HBS
+    //for(int i=0; i< outBuffer->mBuffers[0].mNumberChannels; i++)
+    //    limit_float(&sysData->mOutputBuffer[i*framesPerBuffer], framesPerBuffer);
     
     // Convert left-right buffers to short samples and interleave.
 	SInt16 *outbuf = (SInt16 *) outBuffer->mBuffers[0].mData;
@@ -122,8 +122,8 @@ static OSStatus playbackCallback(void *userData,
     {
         for(int j=0; j<outBuffer->mBuffers[0].mNumberChannels; j++)
         {
-//            *(outbuf++) = 32767 * sysData->mOutputBuffer[j*framesPerBuffer+i];
-			*(outbuf++) = limit_float_conv_SInt16(volume * sysData->mOutputBuffer[j*framesPerBuffer+i]);
+            //*(outbuf++) = 32767 * sysData->mOutputBuffer[j*framesPerBuffer+i];
+			*(outbuf++) = limit_float_conv_SInt16(volume * sysData->mOutputBuffer[j*framesPerBuffer+i]); // HBS
         }
     }    
 	
@@ -212,8 +212,11 @@ System::System(UInt32 sampleRate, UInt32 numFrames, UInt32 options)
     status = AudioSessionInitialize(NULL, NULL, audioSessionInterruptionListener, this);
     AudioSessionSetActive(true);
     checkStatus(status);
-    //UInt32 category = kAudioSessionCategory_PlayAndRecord;
-    UInt32 category = kAudioSessionCategory_AmbientSound;
+	
+	UInt32 category = kAudioSessionCategory_AmbientSound;
+	if( options & UNTZ::RECORDABLE ) {
+		category = kAudioSessionCategory_PlayAndRecord;
+	}
     status = AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, 4, &category);
     checkStatus(status);
     
@@ -385,6 +388,8 @@ void System::resume()
 
 void checkStatus(OSStatus status)
 {
+#ifdef DEBUG
     fprintf(stderr, "audioio status: %d\n", (int)status);
+#endif
 }
 
