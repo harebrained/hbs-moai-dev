@@ -4,17 +4,22 @@
 #ifndef	MOAIFRAMEBUFFER_H
 #define	MOAIFRAMEBUFFER_H
 
-#include <moaicore/MOAIGfxResource.h>
+#include <moaicore/MOAITextureBase.h>
 
 //================================================================//
 // MOAIFrameBuffer
 //================================================================//
+/**	@name	MOAIFrameBuffer
+	@text	This is an implementation of a frame buffer that may be
+			attached to a MOAILayer for offscreen rendering. It is
+			also a texture that may be bound and used like any other.
+*/
 class MOAIFrameBuffer :
-	public MOAIGfxResource {
+	public MOAITextureBase {
 private:
 	
-	u32					mWidth;
-	u32					mHeight;
+	GLbitfield			mClearFlags;
+	u32					mClearColor;
 	
 	GLuint				mGLFrameBufferID;
 	
@@ -25,27 +30,36 @@ private:
 	GLenum				mColorFormat;
 	GLenum				mDepthFormat;
 	GLenum				mStencilFormat;
-	
+
 	//----------------------------------------------------------------//
-	static int		_init					( lua_State* L );
+	static int			_init					( lua_State* L );
+	static int			_setClearColor			( lua_State* L );
+	static int			_setClearDepth			( lua_State* L );
 	
 	//----------------------------------------------------------------//
 	virtual bool		IsRenewable				();
-	virtual void		OnBind					();
-	virtual void		OnClear					();
+	virtual void		OnCreate				();
+	virtual void		OnDestroy				();
+	virtual void		OnInvalidate			();
 	virtual void		OnLoad					();
-	virtual void		OnRenew					();
-	virtual void		OnUnload				();
 
 public:
 	
-	friend class MOAITexture;
+	friend class MOAIGfxDevice;
+	friend class MOAITextureBase;
+	
+	DECL_LUA_FACTORY ( MOAIFrameBuffer )
 	
 	//----------------------------------------------------------------//
+	void				BindAsFrameBuffer		();
 	void				Init					( u32 width, u32 height, GLenum colorFormat, GLenum depthFormat, GLenum stencilFormat );
 	bool				IsValid					();
 						MOAIFrameBuffer			();
 						~MOAIFrameBuffer		();
+	void				RegisterLuaClass		( MOAILuaState& state );
+	void				RegisterLuaFuncs		( MOAILuaState& state );
+	void				SerializeIn				( MOAILuaState& state, MOAIDeserializer& serializer );
+	void				SerializeOut			( MOAILuaState& state, MOAISerializer& serializer );
 };
 
 #endif

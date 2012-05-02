@@ -8,7 +8,7 @@
 #include <moaicore/MOAILogMessages.h>
 #include <moaicore/MOAIParticleState.h>
 #include <moaicore/MOAIParticleSystem.h>
-#include <moaicore/MOAITexture.h>
+#include <moaicore/MOAITextureBase.h>
 
 class MOAIDataBuffer;
 
@@ -293,10 +293,8 @@ int MOAIParticleSystem::_setState ( lua_State* L ) {
 		MOAIParticleState* particleState =  state.GetLuaObject < MOAIParticleState >( 3 );
 		if ( particleState != self->mStates [ idx ]) {
 		
-			self->LuaRetain ( *particleState );
-			if ( self->mStates [ idx ]) {
-				self->LuaRelease ( *self->mStates [ idx ]);
-			}
+			self->LuaRetain ( particleState );
+			self->LuaRelease ( self->mStates [ idx ]);
 			self->mStates [ idx ] = particleState;
 		}
 	}
@@ -339,9 +337,7 @@ int MOAIParticleSystem::_surge ( lua_State* L ) {
 void MOAIParticleSystem::ClearStates () {
 
 	for ( u32 i = 0; i < this->mStates.Size (); ++i ) {
-		if ( this->mStates [ i ]) {
-			this->LuaRelease ( *this->mStates [ i ]);
-		}
+		this->LuaRelease ( this->mStates [ i ]);
 	}
 	this->mStates.Clear ();
 }
@@ -358,13 +354,23 @@ void MOAIParticleSystem::Draw ( int subPrimID, bool reload ) {
 	UNUSED ( subPrimID );
 	UNUSED ( reload );
 
-	if ( !this->BindDeck ()) return;
-	this->LoadShader ();
+	if ( !this->mDeck ) return;
+	
 
 	MOAIGfxDevice& gfxDevice = MOAIGfxDevice::Get ();
+	
+	if ( this->mUVTransform ) {
+		USAffine3D uvMtx = this->mUVTransform->GetLocalToWorldMtx ();
+		gfxDevice.SetUVTransform ( uvMtx );
+	}
+	else {
+		gfxDevice.SetUVTransform ();
+	}
+	
+	this->LoadGfxState ();
 
-	USAffine2D drawingMtx;
-	USAffine2D spriteMtx;
+	USAffine3D drawingMtx;
+	USAffine3D spriteMtx;
 	
 	u32 maxSprites = this->mSprites.Size ();
 	u32 total = this->mSpriteTop;
@@ -373,38 +379,36 @@ void MOAIParticleSystem::Draw ( int subPrimID, bool reload ) {
 		base = total % maxSprites;
 		total = maxSprites;
 	}
-	
+
 	if( this->mIgnoreLocalTransform ) {
 		for ( u32 i = 0; i < total; ++i ) {
-			
+		
 			u32 idx = ( base + i ) % maxSprites;
 		
 			AKUParticleSprite& sprite = this->mSprites [ idx ];
 			gfxDevice.SetPenColor ( sprite.mRed, sprite.mGreen, sprite.mBlue, sprite.mAlpha );
-			
-			spriteMtx.ScRoTr ( sprite.mXScl, sprite.mYScl, sprite.mZRot * ( float )D2R, sprite.mXLoc, sprite.mYLoc );
-			
-			this->mDeck->Draw ( spriteMtx, ( u32 )sprite.mGfxID, this->mRemapper );
+		
+			spriteMtx.ScRoTr ( sprite.mXScl, sprite.mYScl, 1.0f, 0.0f, 0.0f, sprite.mZRot * ( float )D2R, sprite.mXLoc, sprite.mYLoc, 0.0f );
+		
+			this->mDeck->Draw ( drawingMtx, this->mIndex + ( u32 )sprite.mGfxID, this->mRemapper );
 		}
 	}
-	else
-	{
+	else {
 		for ( u32 i = 0; i < total; ++i ) {
-			
+		
 			u32 idx = ( base + i ) % maxSprites;
-			
+		
 			AKUParticleSprite& sprite = this->mSprites [ idx ];
 			gfxDevice.SetPenColor ( sprite.mRed, sprite.mGreen, sprite.mBlue, sprite.mAlpha );
-			
-			spriteMtx.ScRoTr ( sprite.mXScl, sprite.mYScl, sprite.mZRot * ( float )D2R, sprite.mXLoc, sprite.mYLoc );
-			
+		
+			spriteMtx.ScRoTr ( sprite.mXScl, sprite.mYScl, 1.0f, 0.0f, 0.0f, sprite.mZRot * ( float )D2R, sprite.mXLoc, sprite.mYLoc, 0.0f );
+		
 			drawingMtx = this->GetLocalToWorldMtx ();
 			drawingMtx.Append ( spriteMtx );
-			
-			this->mDeck->Draw ( drawingMtx, ( u32 )sprite.mGfxID, this->mRemapper );
+		
+			this->mDeck->Draw ( drawingMtx, this->mIndex + ( u32 )sprite.mGfxID, this->mRemapper );
 		}
 	}
-	
 }
 
 //----------------------------------------------------------------//
@@ -422,9 +426,10 @@ void MOAIParticleSystem::EnqueueParticle ( MOAIParticle& particle ) {
 }
 
 //----------------------------------------------------------------//
-u32 MOAIParticleSystem::GetLocalFrame ( USRect& frame ) {
+u32 MOAIParticleSystem::GetDeckBounds ( USBox& bounds ) {
 
-	frame.Init ( -32.0f, -32.0f, 32.0f, 32.0f );
+	// TODO: this needs to be computed correctly in PushSprite and not returned as BOUNDS_GLOBAL
+	bounds.Init ( -32.0f, -32.0f, 32.0f, 32.0f, 0.0f, 0.0f );
 	return MOAIProp::BOUNDS_GLOBAL;
 }
 
@@ -458,16 +463,19 @@ MOAIParticleSystem::MOAIParticleSystem () :
 	mParticleSize ( 0 ),
 	mCapParticles ( false ),
 	mCapSprites ( false ),
-	mIgnoreLocalTransform( false ),
 	mHead ( 0 ),
 	mTail ( 0 ),
 	mFree ( 0 ),
 	mSpriteTop ( 0 ) {
 	
 	RTTI_BEGIN
-		RTTI_EXTEND ( MOAIProp2D )
+		RTTI_EXTEND ( MOAIProp )
 		RTTI_EXTEND ( MOAIAction )
 	RTTI_END
+	
+	// prop's index is *added* to particle's index;
+	// should be initialized to 0 instead of 1
+	this->mIndex = 0;
 }
 
 //----------------------------------------------------------------//
@@ -580,14 +588,14 @@ bool MOAIParticleSystem::PushSprite ( const AKUParticleSprite& sprite ) {
 //----------------------------------------------------------------//
 void MOAIParticleSystem::RegisterLuaClass ( MOAILuaState& state ) {
 
-	MOAIProp2D::RegisterLuaClass ( state );
+	MOAIProp::RegisterLuaClass ( state );
 	MOAIAction::RegisterLuaClass ( state );
 }
 
 //----------------------------------------------------------------//
 void MOAIParticleSystem::RegisterLuaFuncs ( MOAILuaState& state ) {
 	
-	MOAIProp2D::RegisterLuaFuncs ( state );
+	MOAIProp::RegisterLuaFuncs ( state );
 	MOAIAction::RegisterLuaFuncs ( state );
 	
 	luaL_Reg regTable [] = {
@@ -657,13 +665,13 @@ void MOAIParticleSystem::ReserveStates ( u32 total ) {
 //----------------------------------------------------------------//
 void MOAIParticleSystem::SerializeIn ( MOAILuaState& state, MOAIDeserializer& serializer ) {
 
-	MOAIProp2D::SerializeIn ( state, serializer );
+	MOAIProp::SerializeIn ( state, serializer );
 	MOAIAction::SerializeIn ( state, serializer );
 }
 
 //----------------------------------------------------------------//
 void MOAIParticleSystem::SerializeOut ( MOAILuaState& state, MOAISerializer& serializer ) {
 
-	MOAIProp2D::SerializeOut ( state, serializer );
+	MOAIProp::SerializeOut ( state, serializer );
 	MOAIAction::SerializeOut ( state, serializer );
 }

@@ -54,7 +54,7 @@ private:
 	static int		_setTerm				( lua_State* L );
 
 	//----------------------------------------------------------------//
-	void			GatherForces			( USVec2D& loc, USVec2D& velocity, float mass, float step );
+	void			GatherForces			( USVec3D& loc, USVec3D& velocity, float mass, float step );
 	void			InitParticle			( MOAIParticleSystem& system, MOAIParticle& particle );
 	void			ProcessParticle			( MOAIParticleSystem& system, MOAIParticle& particle, float step );
 

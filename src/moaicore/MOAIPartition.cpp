@@ -5,7 +5,7 @@
 #include <moaicore/MOAILogMessages.h>
 #include <moaicore/MOAIPartition.h>
 #include <moaicore/MOAIPartitionCell.h>
-#include <moaicore/MOAIPartitionLayer.h>
+#include <moaicore/MOAIPartitionLevel.h>
 #include <moaicore/MOAIPartitionResultBuffer.h>
 #include <moaicore/MOAIPartitionResultMgr.h>
 #include <moaicore/MOAIProp.h>
@@ -52,36 +52,47 @@ int MOAIPartition::_insertProp ( lua_State* L ) {
 
 //----------------------------------------------------------------//
 /**	@name	propForPoint
-	@text	Returns the prop with the highest priority underneath
+	@text	Returns the prop with the highest priority that contains
 			the given world space point.
 	
 	@in		MOAIPartition self
 	@in		number x
 	@in		number y
-	@out	MOAIProp prop	The prop under the point or nil if no prop found.
+	@in		number z
+	@opt	number sortMode			One of the MOAILayer sort modes. Default value is SORT_PRIORITY_ASCENDING.
+	@opt	number xScale			X scale for vector sort. Default value is 0.
+	@opt	number yScale			Y scale for vector sort. Default value is 0.
+	@opt	number zScale			Z scale for vector sort. Default value is 0.
+	@opt	number priorityScale	Priority scale for vector sort. Default value is 1.
+	@out	MOAIProp prop		The prop under the point or nil if no prop found.
 */
 int MOAIPartition::_propForPoint ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIPartition, "UNN" )
 
-	USVec2D vec;
+	USVec3D vec;
 	vec.mX = state.GetValue < float >( 2, 0.0f );
 	vec.mY = state.GetValue < float >( 3, 0.0f );
+	vec.mZ = state.GetValue < float >( 4, 0.0f );
 
 	MOAIPartitionResultBuffer& buffer = MOAIPartitionResultMgr::Get ().GetBuffer ();
 
-	u32 total = self->GatherProps ( buffer, vec, 0 );
+	u32 total = self->GatherProps ( buffer, 0, vec );
 	if ( total ) {
 	
 		buffer.PrepareResults ( MOAIPartitionResultBuffer::SORT_NONE );
 		
-		MOAIProp* prop = buffer.PopResult ()->mProp;
-		while ( MOAIPartitionResult* test = buffer.PopResult ()) {
-			if ( test->mProp->GetPriority () > prop->GetPriority ()) {
-				prop = test->mProp;
-			}
+		u32 sortMode = state.GetValue < u32 >( 5, MOAIPartitionResultBuffer::SORT_PRIORITY_ASCENDING );
+		float xScale = state.GetValue < float >( 6, 0.0f );
+		float yScale = state.GetValue < float >( 7, 0.0f );
+		float zScale = state.GetValue < float >( 8, 0.0f );
+		float priorityScale = state.GetValue < float >( 9, 1.0f );
+		
+		buffer.PrepareResults ( MOAIPartitionResultBuffer::SORT_NONE );
+		MOAIProp* prop = buffer.FindBest ( sortMode, xScale, yScale, zScale, priorityScale );
+		if ( prop ) {
+			prop->PushLuaUserdata ( state );
+			return 1;
 		}
-		prop->PushLuaUserdata ( state );
-		return 1;
 	}
 	return 0;
 }
@@ -93,22 +104,36 @@ int MOAIPartition::_propForPoint ( lua_State* L ) {
 	@in		MOAIPartition self
 	@in		number x
 	@in		number y
-	@out	...				The props under the point, all pushed onto the stack.
+	@in		number z
+	@opt	number sortMode			One of the MOAILayer sort modes. Default value is SORT_NONE.
+	@opt	number xScale			X scale for vector sort. Default value is 0.
+	@opt	number yScale			Y scale for vector sort. Default value is 0.
+	@opt	number zScale			Z scale for vector sort. Default value is 0.
+	@opt	number priorityScale	Priority scale for vector sort. Default value is 1.
+	@out	...						The props under the point, all pushed onto the stack.
 */
 int MOAIPartition::_propListForPoint ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIPartition, "UNN" )
 
-	USVec2D vec;
+	USVec3D vec;
 	vec.mX = state.GetValue < float >( 2, 0.0f );
 	vec.mY = state.GetValue < float >( 3, 0.0f );
+	vec.mZ = state.GetValue < float >( 4, 0.0f );
 
 	MOAIPartitionResultBuffer& buffer = MOAIPartitionResultMgr::Get ().GetBuffer ();
 
-	u32 total = self->GatherProps ( buffer, vec, 0 );
+	u32 total = self->GatherProps ( buffer, 0, vec );
 	if ( total ) {
-		buffer.PrepareResults ( MOAIPartitionResultBuffer::SORT_NONE );
+	
+		u32 sortMode = state.GetValue < u32 >( 5, MOAIPartitionResultBuffer::SORT_NONE );
+		float xScale = state.GetValue < float >( 6, 0.0f );
+		float yScale = state.GetValue < float >( 7, 0.0f );
+		float zScale = state.GetValue < float >( 8, 0.0f );
+		float priorityScale = state.GetValue < float >( 9, 1.0f );
+	
+		buffer.PrepareResults ( sortMode, false, xScale, yScale, zScale, priorityScale );
 		buffer.PushResultProps ( L );
-		return 1;
+		return total;
 	}
 	return 0;
 }
@@ -122,24 +147,40 @@ int MOAIPartition::_propListForPoint ( lua_State* L ) {
 	@in		number yMin
 	@in		number xMax
 	@in		number yMax
-	@out	...				The props under the rect, all pushed onto the stack.
+	@opt	number sortMode			One of the MOAILayer sort modes. Default value is SORT_NONE.
+	@opt	number xScale			X scale for vector sort. Default value is 0.
+	@opt	number yScale			Y scale for vector sort. Default value is 0.
+	@opt	number zScale			Z scale for vector sort. Default value is 0.
+	@opt	number priorityScale	Priority scale for vector sort. Default value is 1.
+	@out	...						The props under the rect, all pushed onto the stack.
 */
 int MOAIPartition::_propListForRect ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIPartition, "UNNNN" )
-
-	USRect rect;
-	rect.mXMin = state.GetValue < float >( 2, 0.0f );
-	rect.mYMin = state.GetValue < float >( 3, 0.0f );
-	rect.mXMax = state.GetValue < float >( 4, 0.0f );
-	rect.mYMax = state.GetValue < float >( 5, 0.0f );
-
+	
+	USBox box;
+	
+	box.mMin.mX = state.GetValue < float >( 2, 0.0f );
+	box.mMin.mY = state.GetValue < float >( 3, 0.0f );
+	box.mMin.mZ = 0.0f;
+	
+	box.mMax.mX = state.GetValue < float >( 4, 0.0f );
+	box.mMax.mY = state.GetValue < float >( 5, 0.0f );
+	box.mMax.mZ = 0.0f;
+	
 	MOAIPartitionResultBuffer& buffer = MOAIPartitionResultMgr::Get ().GetBuffer ();
-
-	u32 total = self->GatherProps ( buffer, rect, 0 );
+	
+	u32 total = self->GatherProps ( buffer, 0, box );
 	if ( total ) {
-		buffer.PrepareResults ( MOAIPartitionResultBuffer::SORT_NONE );
+	
+		u32 sortMode = state.GetValue < u32 >( 6, MOAIPartitionResultBuffer::SORT_NONE );
+		float xScale = state.GetValue < float >( 7, 0.0f );
+		float yScale = state.GetValue < float >( 8, 0.0f );
+		float zScale = state.GetValue < float >( 9, 0.0f );
+		float priorityScale = state.GetValue < float >( 10, 1.0f );
+	
+		buffer.PrepareResults ( sortMode, false, xScale, yScale, zScale, priorityScale );
 		buffer.PushResultProps ( L );
-		return 1;
+		return total;
 	}
 	return 0;
 }
@@ -166,111 +207,74 @@ int MOAIPartition::_removeProp ( lua_State* L ) {
 
 //----------------------------------------------------------------//
 /**	@name	reserveLayers
-	@text	Reserves a stack of layers in the partition. Layers must be
-			initialize with setLayer ().
+	@text	Reserves a stack of levels in the partition. Levels must be
+			initialized with setLevel (). This will trigger a full rebuild
+			of the partition if it contains any props.
 	
 	@in		MOAIPartition self
-	@in		number nLayers
+	@in		number nLevels
 	@out	nil
 */
-int MOAIPartition::_reserveLayers ( lua_State* L ) {
+int MOAIPartition::_reserveLevels ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIPartition, "UN" )
 
-	u32 totalLayers = state.GetValue < u32 >( 2, 0 );
+	u32 totalLevels = state.GetValue < u32 >( 2, 0 );
 	
-	self->ReserveLayers ( totalLayers );
+	self->ReserveLevels ( totalLevels );
 
 	return 0;
 }
 
 //----------------------------------------------------------------//
-/**	@name	setLayer
-	@text	Initializes a layer previously created by reserveLayers (). Each
-			layer is a loose grid. Props of a given size may be placed by
-			the system into any layer with cells large enough to accomodate them.
-			The dimensions of a layer control how many cells the layer contains.
-			If an object goes off of the edge of a layer, it will wrap around
+/**	@name	setLevel
+	@text	Initializes a level previously created by reserveLevels ().
+			This will trigger a full rebuild of the partition if it contains any props.
+			Each level is a loose grid. Props of a given size may be placed by
+			the system into any level with cells large enough to accomodate them.
+			The dimensions of a level control how many cells the level contains.
+			If an object goes off of the edge of a level, it will wrap around
 			to the other side. It is possible to model a quad tree by initalizing
-			layers correctly, but for some simulations better structures
+			levels correctly, but for some simulations better structures
 			may be possible.
 	
 	@in		MOAIPartition self
-	@in		number layerID
+	@in		number levelID
 	@in		number cellSize		Dimensions of the layer's cells.
 	@in		number xCells		Width of layer in cells.
 	@in		number yCells		Height of layer in cells.
 	@out	nil
 */
-int MOAIPartition::_setLayer ( lua_State* L ) {
+int MOAIPartition::_setLevel ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIPartition, "UNNNN" )
 
-	u32 layerID		= state.GetValue < u32 >( 2, 1 ) - 1;
+	u32 levelID		= state.GetValue < u32 >( 2, 1 ) - 1;
 	float cellSize	= state.GetValue < float >( 3, 1.0f );
 	u32 width		= state.GetValue < u32 >( 4, 0 );
 	u32 height		= state.GetValue < u32 >( 5, 0 );
 
-	self->SetLayer ( layerID, cellSize, width, height );
+	self->SetLevel ( levelID, cellSize, width, height );
 
 	return 0;
 }
 
 //----------------------------------------------------------------//
-/**	@name	propListForPoint
-	@text	Returns all props under a given world space point sorted
-			by priority.
+/**	@name	setPlane
+	@text	Selects the plane the partition will use. If this is different
+			from the current plane then all non-global props will be redistributed.
+			Redistribution works by moving all props to the 'empties' cell and then
+			scheduling them all for a dep node update (which refreshes the prop's
+			bounds and may also flag it as global).
 	
 	@in		MOAIPartition self
-	@in		number x
-	@in		number y
-	@out	...				The props under the point, sorted and pushed onto the stack.
+	@in		number planeID		One of MOAIPartition::PLANE_XY, MOAIPartition::PLANE_XZ, MOAIPartition::PLANE_YZ. Default value is MOAIPartition::PLANE_XY.
+	@out	nil
 */
-int MOAIPartition::_sortedPropListForPoint ( lua_State* L ) {
-	MOAI_LUA_SETUP ( MOAIPartition, "UNN" )
+int MOAIPartition::_setPlane ( lua_State* L ) {
+	MOAI_LUA_SETUP ( MOAIPartition, "U" )
 
-	USVec2D vec;
-	vec.mX = state.GetValue < float >( 2, 0.0f );
-	vec.mY = state.GetValue < float >( 3, 0.0f );
-	
-	MOAIPartitionResultBuffer& buffer = MOAIPartitionResultMgr::Get ().GetBuffer ();
-	
-	u32 total = self->GatherProps ( buffer, vec, 0 );
-	if ( total ) {
-		buffer.PrepareResults ( MOAIPartitionResultBuffer::SORT_PRIORITY_ASCENDING ); // TODO: pass in as param
-		buffer.PushResultProps ( L );
-		return 1;
-	}
-	return 0;
-}
+	u32 planeID	= state.GetValue < u32 >( 2, USBox::PLANE_XY );
+	self->SetPlane ( planeID );
 
-//----------------------------------------------------------------//
-/**	@name	sortedPropListForRect
-	@text	Returns all props under a given world space rect sorted
-			by priority.
-	
-	@in		MOAIPartition self
-	@in		number xMin
-	@in		number yMin
-	@in		number xMax
-	@in		number yMax
-	@out	...				The props under the rect, sorted and pushed onto the stack.
-*/
-int MOAIPartition::_sortedPropListForRect ( lua_State* L ) {
-	MOAI_LUA_SETUP ( MOAIPartition, "UNNNN" )
-
-	USRect rect;
-	rect.mXMin = state.GetValue < float >( 2, 0.0f );
-	rect.mYMin = state.GetValue < float >( 3, 0.0f );
-	rect.mXMax = state.GetValue < float >( 4, 0.0f );
-	rect.mYMax = state.GetValue < float >( 5, 0.0f );
-	
-	MOAIPartitionResultBuffer& buffer = MOAIPartitionResultMgr::Get ().GetBuffer ();
-	
-	u32 total = self->GatherProps ( buffer, rect, 0 );
-	if ( total ) {
-		buffer.PrepareResults ( MOAIPartitionResultBuffer::SORT_PRIORITY_ASCENDING ); // TODO: pass in as param
-		buffer.PushResultProps ( L );
-		return 1;
-	}
 	return 0;
 }
 
@@ -290,10 +294,11 @@ void MOAIPartition::AffirmPriority ( MOAIProp& prop ) {
 //----------------------------------------------------------------//
 void MOAIPartition::Clear () {
 
-	u32 totalLayers = this->mLayers.Size ();
+	u32 totalLayers = this->mLevels.Size ();
 	for ( u32 i = 0; i < totalLayers; ++i ) {
-		this->mLayers [ i ].Clear ();
+		this->mLevels [ i ].Clear ();
 	}
+	this->mBiggies.Clear ();
 	this->mGlobals.Clear ();
 	this->mEmpties.Clear ();
 }
@@ -303,10 +308,11 @@ u32 MOAIPartition::GatherProps ( MOAIPartitionResultBuffer& results, MOAIProp* i
 	
 	results.Reset ();
 	
-	u32 totalLayers = this->mLayers.Size ();
+	u32 totalLayers = this->mLevels.Size ();
 	for ( u32 i = 0; i < totalLayers; ++i ) {
-		this->mLayers [ i ].GatherProps ( results, ignore, mask );
+		this->mLevels [ i ].GatherProps ( results, ignore, mask );
 	}
+	this->mBiggies.GatherProps ( results, ignore, mask );
 	this->mGlobals.GatherProps ( results, ignore, mask );
 	this->mEmpties.GatherProps ( results, ignore, mask );
 	
@@ -314,29 +320,47 @@ u32 MOAIPartition::GatherProps ( MOAIPartitionResultBuffer& results, MOAIProp* i
 }
 
 //----------------------------------------------------------------//
-u32 MOAIPartition::GatherProps ( MOAIPartitionResultBuffer& results, USVec2D& point, MOAIProp* ignore, u32 mask ) {
+u32 MOAIPartition::GatherProps ( MOAIPartitionResultBuffer& results, MOAIProp* ignore, const USVec3D& point, u32 mask ) {
 	
 	results.Reset ();
 	
-	u32 totalLayers = this->mLayers.Size ();
+	u32 totalLayers = this->mLevels.Size ();
 	for ( u32 i = 0; i < totalLayers; ++i ) {
-		this->mLayers [ i ].GatherProps ( results, ignore, point, mask );
+		this->mLevels [ i ].GatherProps ( results, ignore, point, this->mPlaneID, mask );
 	}
-	this->mGlobals.GatherProps ( results, ignore, point, mask );
+	this->mBiggies.GatherProps ( results, ignore, point, mask );
+	this->mGlobals.GatherProps ( results, ignore, mask );
 	
 	return results.mTotalProps;
 }
 
 //----------------------------------------------------------------//
-u32 MOAIPartition::GatherProps ( MOAIPartitionResultBuffer& results, USRect& rect, MOAIProp* ignore, u32 mask ) {
+u32 MOAIPartition::GatherProps ( MOAIPartitionResultBuffer& results, MOAIProp* ignore, USBox box, u32 mask ) {
+	
+	results.Reset ();
+	box.Bless ();
+	
+	u32 totalLayers = this->mLevels.Size ();
+	for ( u32 i = 0; i < totalLayers; ++i ) {
+		this->mLevels [ i ].GatherProps ( results, ignore, box, this->mPlaneID, mask );
+	}
+	this->mBiggies.GatherProps ( results, ignore, box, mask );
+	this->mGlobals.GatherProps ( results, ignore, mask );
+	
+	return results.mTotalProps;
+}
+
+//----------------------------------------------------------------//
+u32 MOAIPartition::GatherProps ( MOAIPartitionResultBuffer& results, MOAIProp* ignore, const USFrustum& frustum, u32 mask ) {
 	
 	results.Reset ();
 	
-	u32 totalLayers = this->mLayers.Size ();
+	u32 totalLayers = this->mLevels.Size ();
 	for ( u32 i = 0; i < totalLayers; ++i ) {
-		this->mLayers [ i ].GatherProps ( results, ignore, rect, mask );
+		this->mLevels [ i ].GatherProps ( results, ignore, frustum, this->mPlaneID, mask );
 	}
-	this->mGlobals.GatherProps ( results, ignore, rect, mask );
+	this->mBiggies.GatherProps ( results, ignore, frustum, mask );
+	this->mGlobals.GatherProps ( results, ignore, mask );
 	
 	return results.mTotalProps;
 }
@@ -346,7 +370,7 @@ void MOAIPartition::InsertProp ( MOAIProp& prop ) {
 	
 	if ( prop.mPartition == this ) return;
 	
-	this->LuaRetain ( prop );
+	this->LuaRetain ( &prop );
 	
 	if ( prop.mPartition ) {
 		prop.mPartition->RemoveProp ( prop );
@@ -366,7 +390,8 @@ void MOAIPartition::InsertProp ( MOAIProp& prop ) {
 
 //----------------------------------------------------------------//
 MOAIPartition::MOAIPartition () :
-	mPriorityCounter ( 0 ) {
+	mPriorityCounter ( 0 ),
+	mPlaneID ( USBox::PLANE_XY ) {
 	
 	RTTI_BEGIN
 		RTTI_EXTEND ( MOAILuaObject )
@@ -379,8 +404,30 @@ MOAIPartition::~MOAIPartition () {
 }
 
 //----------------------------------------------------------------//
+// This moves all props to the 'empties' cell
+void MOAIPartition::PrepareRebuild () {
+
+	u32 totalLayers = this->mLevels.Size ();
+	for ( u32 i = 0; i < totalLayers; ++i ) {
+		this->mLevels [ i ].ExtractProps ( this->mEmpties, 0 );
+	}
+	this->mBiggies.ExtractProps ( this->mEmpties, 0 );
+	this->mGlobals.ExtractProps ( this->mEmpties, 0 );
+}
+
+//----------------------------------------------------------------//
+// This schedules all props in the 'empties' cell for an update
+void MOAIPartition::Rebuild () {
+
+	this->mEmpties.ScheduleProps ();
+}
+
+//----------------------------------------------------------------//
 void MOAIPartition::RegisterLuaClass ( MOAILuaState& state ) {
-	UNUSED ( state );
+	
+	state.SetField ( -1, "PLANE_XY",	( u32 )USBox::PLANE_XY );
+	state.SetField ( -1, "PLANE_XZ",	( u32 )USBox::PLANE_XZ );
+	state.SetField ( -1, "PLANE_YZ",	( u32 )USBox::PLANE_YZ );
 }
 
 //----------------------------------------------------------------//
@@ -393,10 +440,9 @@ void MOAIPartition::RegisterLuaFuncs ( MOAILuaState& state ) {
 		{ "propListForPoint",			_propListForPoint },
 		{ "propListForRect",			_propListForRect },
 		{ "removeProp",					_removeProp },
-		{ "reserveLayers",				_reserveLayers },
-		{ "setLayer",					_setLayer },
-		{ "sortedPropListForPoint",		_sortedPropListForPoint },
-		{ "sortedPropListForRect",		_sortedPropListForRect },
+		{ "reserveLevels",				_reserveLevels },
+		{ "setLevel",					_setLevel },
+		{ "setPlane",					_setPlane },
 		{ NULL, NULL }
 	};
 	
@@ -413,55 +459,59 @@ void MOAIPartition::RemoveProp ( MOAIProp& prop ) {
 	}
 
 	prop.mPartition = 0;
-	this->LuaRelease ( prop );
+	this->LuaRelease ( &prop );
 }
 
 //----------------------------------------------------------------//
-void MOAIPartition::ReserveLayers ( int totalLayers ) {
+void MOAIPartition::ReserveLevels ( int totalLevels ) {
 
-	this->mLayers.Init ( totalLayers );
+	this->PrepareRebuild ();
+	this->mLevels.Init ( totalLevels );
+	this->Rebuild ();
 }
 
 //----------------------------------------------------------------//
-void MOAIPartition::SetLayer ( int layerID, float cellSize, int width, int height ) {
+void MOAIPartition::SetLevel ( int levelID, float cellSize, int width, int height ) {
 
-	this->mLayers [ layerID ].Init ( cellSize, width, height );
+	this->PrepareRebuild ();
+	this->mLevels [ levelID ].Init ( cellSize, width, height );
+	this->Rebuild ();
 }
 
 //----------------------------------------------------------------//
 void MOAIPartition::UpdateProp ( MOAIProp& prop, u32 status ) {
 
-	prop.SetBounds ();
+	// clear out the layer; layer will be re-calculated below
+	// also: prop.mLayer is *only* for debug drawing 
+	prop.mLayer = 0;
 
-	if ( status == MOAIProp::BOUNDS_GLOBAL ) {
-		this->mGlobals.InsertProp ( prop );
-	}
-	else {
-		this->mEmpties.InsertProp ( prop );
-	}
-}
-
-//----------------------------------------------------------------//
-void MOAIPartition::UpdateProp ( MOAIProp& prop, const USRect& bounds, u32 status ) {
-
+	// status is not 'OK' so prop is either global or empty
 	if ( status != MOAIProp::BOUNDS_OK ) {
-	
-		this->UpdateProp ( prop, status );
+		
+		if ( status == MOAIProp::BOUNDS_GLOBAL ) {
+			this->mGlobals.InsertProp ( prop );
+		}
+		else {
+			this->mEmpties.InsertProp ( prop );
+		}
 		return;
 	}
 
-	u32 layerID;
-	prop.SetBounds ( bounds );
+	USRect rect = prop.mBounds.GetRect ( this->mPlaneID );
 
-	float cellSize = prop.mCellSize;
+	float width = rect.Width ();
+	float height = rect.Height ();
+	float cellSize = ( width > height ) ? width : height;
+	
+	u32 layerID;
 	if ( cellSize > 0.0f ) {
 		
-		MOAIPartitionLayer* layer = 0;
+		MOAIPartitionLevel* layer = 0;
 		
-		u32 totalLayers = this->mLayers.Size ();
+		u32 totalLayers = this->mLevels.Size ();
 		for ( u32 i = 0; i < totalLayers; ++i ) {
-		
-			MOAIPartitionLayer* testLayer = &this->mLayers [ i ];
+			
+			MOAIPartitionLevel* testLayer = &this->mLevels [ i ];
 			
 			if ( cellSize <= testLayer->mCellSize ) {
 				if (( layer == 0 ) || ( testLayer->mCellSize  < layer->mCellSize )) {
@@ -471,29 +521,27 @@ void MOAIPartition::UpdateProp ( MOAIProp& prop, const USRect& bounds, u32 statu
 			}
 		}
 		
-		prop.mLayer = layer;
-		
 		if ( layer ) {
-			//printf ( "layer %d ", ( int )layerID );
+			// layer prop
 			layer->PlaceProp ( prop );
+			prop.mLayer = layer;
 		}
 		else {
-			//printf ( "global cell\n" );
-			this->mGlobals.InsertProp ( prop );
+			// biggie prop - has dimension but too big to fit in any layer
+			this->mBiggies.InsertProp ( prop );
 		}
 	}
 	else {
-		//printf ( "empty cell\n" );
-		prop.mLayer = 0;
+		// empty prop
 		this->mEmpties.InsertProp ( prop );
 	}
 }
 
+//----------------------------------------------------------------//
+void MOAIPartition::SetPlane ( u32 planeID ) {
 
-
-
-
-
-
-
-
+	if ( this->mPlaneID == planeID ) return;
+	this->PrepareRebuild ();
+	this->mPlaneID = planeID;
+	this->Rebuild ();
+}
