@@ -8,6 +8,8 @@
 #include <moaicore/MOAILogMessages.h>
 #include <moaicore/MOAIShader.h>
 #include <moaicore/MOAITransformBase.h>
+#include <moaicore/MOAITransform.h>
+#include <moaicore/MOAITransformList.h>
 
 //================================================================//
 // MOAIShaderUniform
@@ -73,9 +75,16 @@ void MOAIShaderUniform::Bind () {
 			case UNIFORM_TRANSFORM:
 				glUniformMatrix4fv ( this->mAddr, 1, false, this->mBuffer );
 				break;
+				
+			case UNIFORM_MATRIX_ARRAY:
+				if( this->mInt > 0 ) {
+					glUniformMatrix4fv ( this->mAddr, this->mInt, false, this->mBuffer );
+				}
+				break;
 		}
 	}
 }
+
 
 //----------------------------------------------------------------//
 void MOAIShaderUniform::BindPenColor ( float r, float g, float b, float a ) {
@@ -183,6 +192,11 @@ void MOAIShaderUniform::SetType ( u32 type ) {
 			this->SetValue ( mtx );
 			break;
 		}
+		case UNIFORM_MATRIX_ARRAY: {
+			this->mBuffer.Init ( 0 );
+			this->mInt = 0; // Hold the number of matrices.
+			break;
+		}
 	};
 	
 	this->mIsDirty = true;
@@ -230,6 +244,14 @@ void MOAIShaderUniform::SetValue ( const MOAIAttrOp& attrOp ) {
 			USAffine3D* affine = attrOp.GetValue < USAffine3D >();
 			if ( affine ) {
 				this->SetValue ( *affine );
+			}
+			break;
+		}
+		case UNIFORM_MATRIX_ARRAY: {
+			MOAITransformList** transforms = attrOp.GetValue < MOAITransformList* >();
+			if ( transforms )
+			{
+				this->SetValue( *transforms );
 			}
 			break;
 		}
@@ -305,6 +327,54 @@ void MOAIShaderUniform::SetValue ( const USMatrix4x4& value ) {
 	this->SetBuffer ( m, sizeof ( m ));
 }
 
+//----------------------------------------------------------------//
+void MOAIShaderUniform::SetValue ( MOAITransformList* transforms ) {
+
+	// Bypass the normal SetBuffer() to avoid doing an extra memcmp and memcpy.
+	this->mIsDirty = true;
+
+	if( !transforms ) {
+		this->mInt = 0;
+		this->mBuffer.Clear();
+		this->mBuffer.Init(0);
+	}
+	else {
+		
+		u32 n = transforms->Size();
+		for (u32 i = 0; i < n; i++) {
+			MOAITransformBase* t = transforms->GetTransform(i);
+			if( t ) {
+				float *m = this->mBuffer.Data() + 16 * i;
+				
+				const USAffine3D &value = t->GetLocalToWorldMtx();
+				
+				m [ 0 ]		= value.m [ AffineElem3D::C0_R0 ];
+				m [ 1 ]		= value.m [ AffineElem3D::C1_R0 ];
+				m [ 2 ]		= value.m [ AffineElem3D::C2_R0 ];
+				m [ 3 ]		= value.m [ AffineElem3D::C3_R0 ];
+				
+				m [ 4 ]		= value.m [ AffineElem3D::C0_R1 ];
+				m [ 5 ]		= value.m [ AffineElem3D::C1_R1 ];
+				m [ 6 ]		= value.m [ AffineElem3D::C2_R1 ];
+				m [ 7 ]		= value.m [ AffineElem3D::C3_R1 ];
+				
+				m [ 8 ]		= value.m [ AffineElem3D::C0_R2 ];
+				m [ 9 ]		= value.m [ AffineElem3D::C1_R2 ];
+				m [ 10 ]	= value.m [ AffineElem3D::C2_R2 ];
+				m [ 11 ]	= value.m [ AffineElem3D::C3_R2 ];
+				
+				m [ 12 ]	= 0;
+				m [ 13 ]	= 0;
+				m [ 14 ]	= 0;
+				m [ 15 ]	= 1;
+			}
+		}
+		
+	}
+
+}
+
+
 //================================================================//
 // local
 //================================================================//
@@ -336,7 +406,7 @@ int MOAIShader::_clearUniform ( lua_State* L ) {
 	@in		string name
 	@opt	number type		One of MOAIShader.UNIFORM_COLOR, MOAIShader.UNIFORM_FLOAT, MOAIShader.UNIFORM_INT,
 							MOAIShader.UNIFORM_TRANSFORM, MOAIShader.UNIFORM_PEN_COLOR, MOAIShader.UNIFORM_VIEW_PROJ,
-							MOAIShader.UNIFORM_WORLD, MOAIShader.UNIFORM_WORLD_VIEW_PROJ
+							MOAIShader.UNIFORM_WORLD, MOAIShader.UNIFORM_WORLD_VIEW_PROJ, MOAIShader.UNIFORM_MATRIX_ARRAY
 	@out	nil
 */
 int MOAIShader::_declareUniform ( lua_State* L ) {
@@ -394,6 +464,29 @@ int MOAIShader::_declareUniformInt ( lua_State* L ) {
 
 	return 0;
 }
+
+//----------------------------------------------------------------//
+/**	@name	declareUniformMatrixArray
+ @text	Declares a matrix array uniform. (Such as those used for bones during skinning.)
+ 
+ @in		MOAIShader self
+ @in		number idx
+ @in		string name
+ @opt	number size		The number of matrices to expect in the array (must match shader declaration).
+ @out	nil
+ */
+int MOAIShader::_declareUniformMatrixArray ( lua_State* L ) {
+	MOAI_LUA_SETUP ( MOAIShader, "UNSN" )
+	
+	u32 idx				= state.GetValue < u32 >( 2, 1 ) - 1;
+	STLString name		= state.GetValue < cc8* >( 3, "" );
+	int count			= state.GetValue < int >( 4, 0 );
+	
+	self->DeclareUniform ( idx, name, MOAIShaderUniform::UNIFORM_MATRIX_ARRAY, count );
+	
+	return 0;
+}
+
 
 //----------------------------------------------------------------//
 /**	@name	declareUniformSampler
@@ -771,6 +864,7 @@ void MOAIShader::RegisterLuaClass ( MOAILuaState& state ) {
 	state.SetField ( -1, "UNIFORM_VIEW_PROJ",			( u32 )MOAIShaderUniform::UNIFORM_VIEW_PROJ );
 	state.SetField ( -1, "UNIFORM_WORLD",				( u32 )MOAIShaderUniform::UNIFORM_WORLD );
 	state.SetField ( -1, "UNIFORM_WORLD_VIEW_PROJ",		( u32 )MOAIShaderUniform::UNIFORM_WORLD_VIEW_PROJ );
+	state.SetField ( -1, "UNIFORM_MATRIX_ARRAY",		( u32 )MOAIShaderUniform::UNIFORM_MATRIX_ARRAY );
 }
 
 //----------------------------------------------------------------//
@@ -784,6 +878,7 @@ void MOAIShader::RegisterLuaFuncs ( MOAILuaState& state ) {
 		{ "declareUniform",				_declareUniform },
 		{ "declareUniformFloat",		_declareUniformFloat },
 		{ "declareUniformInt",			_declareUniformInt },
+		{ "declareUniformMatrixArray",	_declareUniformMatrixArray },
 		{ "declareUniformSampler",		_declareUniformSampler },
 		{ "load",						_load },
 		{ "reserveUniforms",			_reserveUniforms },
@@ -806,6 +901,15 @@ void MOAIShader::SetSource ( cc8* vshSource, cc8* fshSource ) {
 	if ( vshSource && fshSource ) {
 		this->mVertexShaderSource = vshSource;
 		this->mFragmentShaderSource = fshSource;
+	}
+}
+
+//----------------------------------------------------------------//
+void MOAIShader::SetUniformValue( u32 idx, MOAITransformList* transforms ) {
+	if ( idx < this->mUniforms.Size () ) {
+		MOAIShaderUniform &uniform = this->mUniforms[idx];
+		uniform.SetValue( transforms );
+		uniform.Bind();
 	}
 }
 

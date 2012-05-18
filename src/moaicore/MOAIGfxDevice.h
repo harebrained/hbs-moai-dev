@@ -15,6 +15,7 @@ class MOAIGfxState;
 class MOAIMultiTexture;
 class MOAIShader;
 class MOAITextureBase;
+class MOAITransformList;
 class MOAIVertexFormat;
 class MOAIViewport;
 
@@ -301,6 +302,7 @@ public:
 	void					SetVertexTransform		( u32 id );
 	void					SetVertexTransform		( u32 id, const USAffine3D& transform );
 	void					SetVertexTransform		( u32 id, const USMatrix4x4& transform );
+	void					SetVertexTransformList  ( u32 idx, MOAITransformList* transforms );
 	
 	void					SetViewport				();
 	void					SetViewport				( const USRect& viewport );
