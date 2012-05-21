@@ -163,11 +163,170 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	jmethodID		mFlurrySetAge;
 	jmethodID		mFlurrySetGender;
 	
+	jmethodID		mSixWavesCrossSell;
+	jmethodID   	mSixWavesHideAdBanner;
+	jmethodID	 	mSixWavesHideCrossSellBtn;
+	jmethodID		mSixWavesShowAdBanner;
+	jmethodID		mSixWavesShowCrossSellBtn;
+	jmethodID		mSixWavesTrackPurchaseEvent;
+	jmethodID		mSixWavesTrackInGameItemPurchase;
+	jmethodID		mSixWavesTrackTutorialEvent;
+	
 	//----------------------------------------------------------------//
 	int JNI_OnLoad ( JavaVM* vm, void* reserved ) {
     
 		jvm = vm;		
 		return JNI_VERSION_1_4;
+	}
+	
+//================================================================//
+// 6 Waves Funcs
+//================================================================//
+	static int SixWaves_crossSell(lua_State *L)
+	{
+		GET_ENV();
+		env->CallVoidMethod( mMoaiActivity, mSixWavesCrossSell );
+		return 0;
+	}
+	
+	static int SixWaves_hideAdBanner(lua_State *L)
+	{
+		return 0;
+	}
+	
+	static int SixWaves_hideCrossSellBtn(lua_State *L)
+	{
+		GET_ENV();
+		env->CallVoidMethod( mMoaiActivity, mSixWavesHideCrossSellBtn );
+		return 0;
+	}
+	
+	static int SixWaves_showAdBanner(lua_State *L)
+	{
+		return 0;
+	}
+	
+	static int SixWaves_showCrossSellBtn(lua_State *L)
+	{
+		GET_ENV();
+		env->CallVoidMethod( mMoaiActivity, mSixWavesShowCrossSellBtn );
+		return 0;
+	}
+	
+	static int SixWaves_trackPurchaseEvent(lua_State *L)
+	{
+		GET_ENV()
+		if( lua_type(L, 1) != LUA_TSTRING )
+			return 0;
+		
+		if( lua_type(L, 2) != LUA_TNUMBER )
+			return 0;
+			
+		jstring itemID = env->NewStringUTF(lua_tostring(L,1));	
+		float val = lua_tonumber(L, 2);
+		env->CallVoidMethod( mMoaiActivity, mSixWavesTrackPurchaseEvent, itemID,  val);
+		env->DeleteLocalRef(itemID);
+		return 0;
+	}
+	
+	static int SixWaves_trackInGameItemPurchaseWithItem(lua_State *L)
+	{
+		GET_ENV();
+		if( lua_type(L, 1) != LUA_TSTRING )
+			return 0;
+
+		jstring itemID = env->NewStringUTF(lua_tostring(L,1));
+		int table_count = 0;
+		
+		jobjectArray items;
+		int idx = 2;
+		if(lua_type(L,2) == LUA_TTABLE )
+		{
+			lua_pushnil( L );
+
+			while( lua_next( L, idx)  != 0 )
+			{
+				int keyType = lua_type(L, -2);
+				int valType = lua_type(L, -1);
+
+				if(( keyType == LUA_TSTRING || keyType == LUA_TNUMBER) &&
+				  ( valType == LUA_TSTRING || valType == LUA_TNUMBER))
+				  table_count +=2;
+				  
+				lua_pop( L, 1 );
+			}
+
+			jstring keyList[table_count];
+			
+			if( table_count > 1 )
+			{
+				items = (jobjectArray)env->NewObjectArray(table_count,
+						 env->FindClass("java/lang/String"),
+						 env->NewStringUTF(""));
+				lua_pushnil( L );
+				int count = 0;
+				idx = 2;
+				while( lua_next( L, idx)  != 0 )
+				{
+					int keyType = lua_type(L, -2);
+					int valType = lua_type(L, -1);
+					if( (keyType != LUA_TSTRING && keyType != LUA_TNUMBER) || 
+						(valType != LUA_TSTRING && valType != LUA_TNUMBER))
+						continue;
+						
+					if( keyType == LUA_TSTRING )
+						env->SetObjectArrayElement( items,count,env->NewStringUTF(lua_tostring(L,-2)));
+					else
+					{
+						float value = lua_tonumber(L, -2);
+						char string[512];
+						sprintf( string, "%f", value );
+						env->SetObjectArrayElement( items,count,env->NewStringUTF(string));
+					}	
+					
+					if( valType == LUA_TSTRING )
+						env->SetObjectArrayElement( items,count+1,env->NewStringUTF(lua_tostring(L,-1)));
+					else
+					{
+						float value = lua_tonumber(L, -1);
+						char string[512];
+						sprintf( string, "%f", value );
+						env->SetObjectArrayElement( items,count+1,env->NewStringUTF(string));
+					}
+					const char *value;
+					
+					count +=2;
+					lua_pop( L, 1 );
+				}
+			}
+		}
+
+		env->CallVoidMethod( mMoaiActivity, mSixWavesTrackInGameItemPurchase, itemID,  items);
+		env->DeleteLocalRef(itemID);
+		if( table_count > 1 )
+			env->DeleteLocalRef(items);
+		return 0;
+	}
+	
+	static int SixWaves_trackTutorialEvent(lua_State *L)
+	{
+		GET_ENV()
+		if( lua_type(L, 1) != LUA_TSTRING &&  lua_type(L, 1) != LUA_TNUMBER)
+			return 0;
+		
+		jstring eventString;
+		if(lua_type(L, 1) == LUA_TSTRING)
+			eventString = env->NewStringUTF(lua_tostring(L,1));	
+		else
+		{
+			float value = lua_tonumber(L, 1);
+			char string[512];
+			sprintf( string, "%f", value );
+			eventString = env->NewStringUTF( string );
+		}
+		env->CallVoidMethod( mMoaiActivity, mSixWavesTrackTutorialEvent, eventString );
+		env->DeleteLocalRef(eventString);
+		return 0;
 	}
 	
 //================================================================//
@@ -599,6 +758,8 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 		mShowDialogFunc = env->GetMethodID ( moaiActivityClass, "showDialog", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V" );
 		mShareFunc = env->GetMethodID ( moaiActivityClass, "share", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V" );
 
+		lua_State* state  = AKUGetLuaState();
+
 #ifndef DISABLE_FLURRY
 		// Flurry
 		mFlurryClass = (jclass)env->NewGlobalRef( env->FindClass ( "com/flurry/android/FlurryAgent" ) );
@@ -609,8 +770,6 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 		mFlurrySetUserID = env->GetStaticMethodID ( mFlurryClass, "setUserId", "(Ljava/lang/String;)V" );
 		mFlurrySetAge = env->GetStaticMethodID ( mFlurryClass, "setAge", "(I)V");
 		mFlurrySetGender = env->GetStaticMethodID ( mFlurryClass, "setGender", "(B)V");
-
-		lua_State* state  = AKUGetLuaState();
 
 		{		
 			luaL_Reg regTable [] = {
@@ -623,6 +782,35 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 			};
 	
 			luaL_register( state, "Flurry", regTable );
+			lua_pop(state, 1);
+		}
+#endif
+
+#ifndef DISABLE SIXWAVES
+		// SixWaves
+		mSixWavesCrossSell  = env->GetMethodID ( moaiActivityClass, "swCrossSell", "()V" );
+		mSixWavesHideAdBanner = env->GetMethodID ( moaiActivityClass, "swHideAdBanner", "()V" );
+		mSixWavesHideCrossSellBtn = env->GetMethodID ( moaiActivityClass, "swHideCrossSellBtn", "()V" );
+		mSixWavesShowAdBanner = env->GetMethodID ( moaiActivityClass, "swShowAdBanner", "()V" );
+		mSixWavesShowCrossSellBtn = env->GetMethodID ( moaiActivityClass, "swShowCrossSellBtn", "()V" );
+		mSixWavesTrackPurchaseEvent = env->GetMethodID ( moaiActivityClass, "swTrackPurchaseEvent", "(Ljava/lang/String;FLjava/lang/String;)V" );
+		mSixWavesTrackInGameItemPurchase = env->GetMethodID ( moaiActivityClass, "swTrackInGameItemPurchase", "(Ljava/lang/String;[Ljava/lang/Object;)V" );
+		mSixWavesTrackTutorialEvent = env->GetMethodID ( moaiActivityClass, "swTrackTutorialEvent", "(Ljava/lang/String;)V" );
+		{
+			luaL_Reg regTable [] = {
+				{ "crossSell",		SixWaves_crossSell },
+				{ "hideAdBanner",   SixWaves_hideAdBanner },
+				{ "hideCrossSellBtn", SixWaves_hideCrossSellBtn },
+				{ "showAdBanner",   SixWaves_showAdBanner },
+				{ "showCrossSellBtn", SixWaves_showCrossSellBtn },
+				{ "trackPurchaseEvent", SixWaves_trackPurchaseEvent },
+				{ "trackInGameItemPurchase", SixWaves_trackInGameItemPurchaseWithItem },
+				{ "trackTutorialEvent", SixWaves_trackTutorialEvent },
+				{ NULL, NULL }
+			};
+			
+			
+			luaL_register(state, "SixWaves", regTable);
 			lua_pop(state, 1);
 		}
 #endif
