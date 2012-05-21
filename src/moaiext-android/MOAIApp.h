@@ -21,6 +21,8 @@ private:
 		PURCHASE_STATE_CHANGED,
 		RESTORE_RESPONSE_RECEIVED,
 		BACK_BUTTON_PRESSED,
+		DID_REGISTER,
+		REMOTE_NOTIFICATION,
 		TOTAL,
 	};
 	
@@ -54,6 +56,7 @@ private:
 	static int		_checkBillingSupported		( lua_State* L );
 	static int		_confirmNotification		( lua_State* L );
 	static int		_openURL					( lua_State* L );
+	static int		_registerForRemoteNotifications ( lua_State* L );
 	static int		_requestPurchase			( lua_State* L );
 	static int		_restoreTransactions		( lua_State* L );
 	static int		_setListener				( lua_State* L );
@@ -64,6 +67,7 @@ private:
 	bool ( *checkBillingSupportedFunc )			( void );
 	bool ( *confirmNotificationFunc ) 			( cc8* );
 	void ( *openURLFunc ) 						( cc8* );
+	void ( *registerNotificationsFunc )			( int );
 	bool ( *requestPurchaseFunc ) 				( cc8*, cc8* );
 	bool ( *restoreTransactionsFunc )			( void );
 	void ( *setMarketPublicKeyFunc )			( cc8* );
@@ -81,6 +85,8 @@ public:
 	bool		NotifyBackButtonPressed			();
 	void		NotifyBillingSupported			( bool supported );
 	void		NotifyDialogDismissed			( int code );
+	void		NotifyDidRegisterNotifications	( cc8* token );
+	void		NotifyOnRemoteNotification		( cc8* data );
 	void		NotifyPurchaseResponseReceived	( cc8* identifier, int code );
 	void		NotifyPurchaseStateChanged		( cc8* identifier, int code, cc8* order, cc8* notification, cc8* payload );
 	void		NotifyRestoreResponseReceived	( int code );
@@ -90,6 +96,7 @@ public:
 	void		SetCheckBillingSupportedFunc	( bool ( *func ) ());
 	void		SetConfirmNotificationFunc		( bool ( *func ) ( cc8* ));
 	void		SetOpenURLFunc					( void ( *func ) ( cc8* ));
+	void		SetRegisterNotificationsFunc	( void ( *func) ( int ));
 	void		SetRequestPurchaseFunc			( bool ( *func ) ( cc8*, cc8* ));
 	void		SetRestoreTransactionsFunc		( bool ( *func ) () );
 	void		SetMarketPublicKeyFunc			( void ( *func ) ( cc8* ));

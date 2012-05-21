@@ -48,6 +48,16 @@ int MOAIApp::_openURL ( lua_State* L ) {
 }
 
 //----------------------------------------------------------------//
+int MOAIApp::_registerForRemoteNotifications( lua_State* L ) {
+	MOAILuaState state ( L );
+	
+	int type = state.GetValue < int > ( 1, 0 );
+	MOAIApp::Get ().registerNotificationsFunc( type );
+	
+	return 0;
+}
+
+//----------------------------------------------------------------//
 int MOAIApp::_requestPurchase ( lua_State* L ) {
 	MOAILuaState state ( L );
 	
@@ -164,6 +174,11 @@ void MOAIApp::OnInit () {
 //----------------------------------------------------------------//
 void MOAIApp::RegisterLuaClass ( MOAILuaState& state ) {
 
+	state.SetField ( -1, "REMOTE_NOTIFICATION_NONE",	0 );
+	state.SetField ( -1, "REMOTE_NOTIFICATION_BADGE",	1 );
+	state.SetField ( -1, "REMOTE_NOTIFICATION_SOUND",	2 );
+	state.SetField ( -1, "REMOTE_NOTIFICATION_ALERT",	4 );
+	
 	state.SetField ( -1, "SESSION_START",		    			( u32 )SESSION_START );
 	state.SetField ( -1, "SESSION_END",			    			( u32 )SESSION_END );
 	state.SetField ( -1, "CHECK_BILLING_SUPPORTED",				( u32 )CHECK_BILLING_SUPPORTED );
@@ -171,6 +186,8 @@ void MOAIApp::RegisterLuaClass ( MOAILuaState& state ) {
 	state.SetField ( -1, "PURCHASE_STATE_CHANGED",				( u32 )PURCHASE_STATE_CHANGED );
 	state.SetField ( -1, "RESTORE_RESPONSE_RECEIVED",			( u32 )RESTORE_RESPONSE_RECEIVED );
 	state.SetField ( -1, "BACK_BUTTON_PRESSED",					( u32 )BACK_BUTTON_PRESSED );
+	state.SetField ( -1, "DID_REGISTER",						( u32 )DID_REGISTER );
+	state.SetField ( -1, "REMOTE_NOTIFICATION",					( u32 )REMOTE_NOTIFICATION);
 
 	state.SetField ( -1, "BILLING_RESULT_OK",					( u32 )BILLING_RESULT_OK );
 	state.SetField ( -1, "BILLING_RESULT_USER_CANCELED",		( u32 )BILLING_RESULT_USER_CANCELED );
@@ -193,6 +210,7 @@ void MOAIApp::RegisterLuaClass ( MOAILuaState& state ) {
 		{ "checkBillingSupported",				_checkBillingSupported },
 		{ "confirmNotification",				_confirmNotification },
 		{ "openURL",							_openURL },
+		{ "registerForRemoteNotifications",		_registerForRemoteNotifications},
 		{ "requestPurchase",					_requestPurchase },
 		{ "restoreTransactions",				_restoreTransactions },
 		{ "setListener",						_setListener },
@@ -228,6 +246,11 @@ void MOAIApp::SetOpenURLFunc ( void ( *func ) ( cc8* )) {
 }
 
 //----------------------------------------------------------------//
+void MOAIApp::SetRegisterNotificationsFunc	( void ( *func) ( int )){
+	registerNotificationsFunc = func;
+}
+
+//----------------------------------------------------------------//
 void MOAIApp::SetRequestPurchaseFunc ( bool ( *func ) ( cc8*, cc8* )) {
 	requestPurchaseFunc = func;
 }
@@ -260,6 +283,32 @@ void MOAIApp::NotifyBillingSupported ( bool supported ) {
 		MOAILuaStateHandle state = callback.GetSelf ();
 		
 		lua_pushboolean ( state, supported );
+			
+		state.DebugCall ( 1, 0 );
+	}
+}
+
+//----------------------------------------------------------------//
+void  MOAIApp::NotifyDidRegisterNotifications ( cc8* token ){
+	MOAILuaRef& callback = this->mListeners [ DID_REGISTER ];
+	
+	if ( callback ) {
+		MOAILuaStateHandle state = callback.GetSelf ();
+		
+		lua_pushstring ( state, token );
+			
+		state.DebugCall ( 1, 0 );
+	}
+}
+
+//----------------------------------------------------------------//
+void  MOAIApp::NotifyOnRemoteNotification ( cc8* data ){
+	MOAILuaRef& callback = this->mListeners [ REMOTE_NOTIFICATION ];
+	
+	if ( callback ) {
+		MOAILuaStateHandle state = callback.GetSelf ();
+		
+		lua_pushstring ( state, data );
 			
 		state.DebugCall ( 1, 0 );
 	}

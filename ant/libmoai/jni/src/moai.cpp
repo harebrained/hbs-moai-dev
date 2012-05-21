@@ -145,6 +145,7 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	jmethodID		mConfirmNotificationFunc;
 	jmethodID 		mGenerateGuidFunc;
 	jmethodID		mOpenURLFunc;
+	jmethodID		mRegisterNotificationsFunc;
 	jmethodID		mRequestPurchaseFunc;
 	jmethodID		mRestoreTransactionsFunc;
 	jmethodID		mSetMarketPublicKeyFunc;
@@ -323,6 +324,13 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 		return retVal;
 	}
 
+	//----------------------------------------------------------------//
+	void RequestNotifications( int types ){
+	
+		GET_ENV ();
+		env->CallVoidMethod( mMoaiActivity, mRegisterNotificationsFunc);
+	}
+	
 	//----------------------------------------------------------------//
 	bool RequestPurchase ( const char* identifier, const char* payload ) {
 
@@ -572,6 +580,7 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 		MOAIApp::Get ().SetConfirmNotificationFunc( &ConfirmNotification );
 		MOAIApp::Get ().SetOpenURLFunc( &OpenURL );
 		MOAIApp::Get ().SetMarketPublicKeyFunc( &SetMarketPublicKey );
+		MOAIApp::Get ().SetRegisterNotificationsFunc( &RequestNotifications );
 		MOAIApp::Get ().SetRequestPurchaseFunc( &RequestPurchase );
 		MOAIApp::Get ().SetRestoreTransactionsFunc( &RestoreTransactions );
 		MOAIApp::Get ().SetShowDialogFunc( &ShowDialog );
@@ -583,6 +592,7 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 		mCheckBillingSupportedFunc = env->GetMethodID ( moaiActivityClass, "checkBillingSupported", "()Z" );
 		mConfirmNotificationFunc = env->GetMethodID ( moaiActivityClass, "confirmNotification", "(Ljava/lang/String;)Z" );
 		mOpenURLFunc = env->GetMethodID ( moaiActivityClass, "openURL", "(Ljava/lang/String;)V" );
+		mRegisterNotificationsFunc =  env->GetMethodID ( moaiActivityClass, "registerNotifications", "(I)V");
 		mRequestPurchaseFunc = env->GetMethodID ( moaiActivityClass, "requestPurchase", "(Ljava/lang/String;Ljava/lang/String;)Z" );
 		mRestoreTransactionsFunc = env->GetMethodID ( moaiActivityClass, "restoreTransactions", "()Z" );
 		mSetMarketPublicKeyFunc = env->GetMethodID ( moaiActivityClass, "setMarketPublicKey", "(Ljava/lang/String;)V" );
@@ -630,6 +640,20 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	//----------------------------------------------------------------//
 	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiActivity_AKUNotifyBillingSupported ( JNIEnv* env, jclass obj, jboolean supported ) {
 		MOAIApp::Get ().NotifyBillingSupported ( supported );
+	}
+	
+	//----------------------------------------------------------------//
+	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiActivity_AKUNotifyDidRegisterNotifications ( JNIEnv* env, jclass obj, jstring jtoken ) {
+		GET_CSTRING ( jtoken, token );
+		MOAIApp::Get ().NotifyDidRegisterNotifications ( token );
+		RELEASE_CSTRING ( jtoken, token );
+	}
+	
+	//----------------------------------------------------------------//
+	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiActivity_AKUNotifyOnRemoteNotification  ( JNIEnv* env, jclass obj, jstring jdata ) {
+		GET_CSTRING ( jdata, data );
+		MOAIApp::Get ().NotifyOnRemoteNotification ( data );
+		RELEASE_CSTRING ( jdata, data );
 	}
 	
 	//----------------------------------------------------------------//
