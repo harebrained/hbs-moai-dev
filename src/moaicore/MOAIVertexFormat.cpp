@@ -119,7 +119,7 @@ int MOAIVertexFormat::_declareUV ( lua_State* L ) {
  @text	Declare a vertex (bone) weight index.
  
  @in		MOAIVertexFormat self
- @in		number type			Data type of weight index. (Often a GL_SHORT). See OpenGL ES documentation.
+ @in		number type			Data type of weight index. See OpenGL ES documentation.
  @in		number size			Number of weight indices. See OpenGL ES documentation.
  @out	nil
  */
@@ -127,8 +127,8 @@ int MOAIVertexFormat::_declareWeightIndex ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIVertexFormat, "UNNN" )
 	
 	u32 index			= state.GetValue < u32 >( 2, 1 ) - 1;
-	u32 type			= state.GetValue < u32 >( 3, GL_SHORT );
-	u32 size			= state.GetValue < u32 >( 4, 1 );
+	u32 type			= state.GetValue < u32 >( 3, 0 );
+	u32 size			= state.GetValue < u32 >( 4, 0 );
 	
 	self->DeclareAttribute ( index, type, size, ARRAY_WEIGHT_INDEX, false );
 	

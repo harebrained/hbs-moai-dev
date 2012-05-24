@@ -15,12 +15,13 @@ class MOAITransform;
  @text	Array of transforms (for instance, a set of Bones in a skeletal animation).
  */
 class MOAITransformList :
-public virtual MOAILuaObject {
+public virtual MOAINode {
 private:
 	
 	USLeanArray < MOAITransform* > mTransforms;
 	
 	//----------------------------------------------------------------//
+	static int		_getTransform			( lua_State* L );
 	static int		_reserve				( lua_State* L );
 	static int		_setTransform			( lua_State* L );
 	

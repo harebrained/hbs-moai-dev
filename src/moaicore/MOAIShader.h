@@ -14,8 +14,8 @@ class MOAITransformList;
 
 typedef USLeanArray<USMatrix4x4> USMatrix4x4Array;
 	
-#define		OPENGL_PREPROC		"#define LOWP\n #define MEDP\n"
-#define		OPENGL_ES_PREPROC	"#define LOWP lowp\n #define MEDP mediump\n"
+#define		OPENGL_PREPROC		"#define LOWP\n #define MEDP\n #define HIGHP\n"
+#define		OPENGL_ES_PREPROC	"#define LOWP lowp\n #define MEDP mediump\n #define HIGHP highp\n"
 
 //================================================================//
 // MOAIShaderUniform
@@ -43,6 +43,7 @@ private:
 	void		Bind						();
 	void		BindPenColor				( float r, float g, float b, float a );
 	void		BindPipelineTransforms		( const USMatrix4x4& world, const USMatrix4x4& view, const USMatrix4x4& proj );
+	void		BindWorldTransformList		( MOAITransformList *transforms );
 	void		Clear						();
 	void		SetBuffer					( void* buffer, size_t size );
 	void		SetType						( u32 type );
@@ -68,7 +69,8 @@ public:
 		UNIFORM_VIEW_PROJ,
 		UNIFORM_WORLD,
 		UNIFORM_WORLD_VIEW_PROJ,
-		UNIFORM_MATRIX_ARRAY,
+		UNIFORM_WORLD_MATRIX_ARRAY,
+		UNIFORM_WORLD_MATRIX_ARRAY_COUNT,
 	};
 
 				MOAIShaderUniform			();
@@ -114,7 +116,6 @@ protected:
 	static int		_declareUniform				( lua_State* L );
 	static int		_declareUniformFloat		( lua_State* L );
 	static int		_declareUniformInt			( lua_State* L );
-	static int		_declareUniformMatrixArray	( lua_State* L );
 	static int		_declareUniformSampler		( lua_State* L );
 	static int		_load						( lua_State* L );
 	static int		_reserveUniforms			( lua_State* L );
@@ -132,6 +133,7 @@ protected:
 	void			OnLoad						();
 	void			UpdatePenColor				( float r, float g, float b, float a );
 	void			UpdatePipelineTransforms	( const USMatrix4x4& world, const USMatrix4x4& view, const USMatrix4x4& proj );
+	void			UpdateWorldTransformList	( MOAITransformList *transforms );
 	bool			Validate					();
 
 public:

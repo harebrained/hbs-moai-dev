@@ -12,15 +12,42 @@
 //================================================================//
 
 //----------------------------------------------------------------//
-/**	@name	reserve
- @text	Reserve (and either clear or allocate) slots for transforms. This will
- clear out any existing transforms before resizing the underlying array.
+/**	@name	getTransform
+	@text	Set or clears a transform for a given index. Note: If you leave this uninitialized,
+			and try to use this as a skeleton for a MOAIProp, badness will ensue!
  
- @in		MOAITransformList self
- @opt	number total			Default value is 0.
- @opt	boolean allocate		Allocate new MOAITransforms for each new slot.
- @out	nil
- */
+	@in		MOAITransformList self
+	@in		number index
+	@opt	MOAITransform transform		Default value is nil.
+	@out	nil
+*/
+int MOAITransformList::_getTransform( lua_State *L ) {
+	
+	MOAI_LUA_SETUP ( MOAITransformList, "UN" )
+	
+	u32 idx						= state.GetValue < u32 >( 2, 1 ) - 1;
+	
+	MOAITransform* transform = self->GetTransform(idx);
+	if(	transform ) {
+		state.Push( transform );
+	}
+	else {
+		lua_pushnil(L);
+	}
+	
+	return 1;
+}
+
+//----------------------------------------------------------------//
+/**	@name	reserve
+	@text	Reserve (and either clear or allocate) slots for transforms. This will
+			clear out any existing transforms before resizing the underlying array.
+ 
+	@in		MOAITransformList self
+	@opt	number total			Default value is 0.
+	@opt	boolean allocate		Allocate new MOAITransforms for each new slot.
+	@out	nil
+*/
 int MOAITransformList::_reserve ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAITransformList, "U" )
 	
@@ -33,13 +60,14 @@ int MOAITransformList::_reserve ( lua_State* L ) {
 }
 
 //----------------------------------------------------------------//
-/**	@name	setTexture
- @text	Sets of clears a texture for the given index.
+/**	@name	setTransform
+	@text	Set or clears a transform for a given index. Note: If you leave this uninitialized,
+			and try to use this as a skeleton for a MOAIProp, badness will ensue!
  
- @in		MOAITextureBase self
- @in		number index
- @opt	MOAITextureBase texture		Default value is nil.
- @out	nil
+	@in		MOAITransformList self
+	@in		number index
+	@opt	MOAITransform transform		Default value is nil.
+	@out	nil
  */
 int MOAITransformList::_setTransform ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAITransformList, "UN" )
@@ -63,7 +91,9 @@ void MOAITransformList::Clear () {
 //----------------------------------------------------------------//
 MOAITransformList::MOAITransformList () {
 	
-	RTTI_SINGLE ( MOAILuaObject )
+	RTTI_BEGIN
+		RTTI_EXTEND ( MOAINode )
+	RTTI_END
 }
 
 //----------------------------------------------------------------//
@@ -102,6 +132,7 @@ void MOAITransformList::RegisterLuaClass ( MOAILuaState& state ) {
 void MOAITransformList::RegisterLuaFuncs ( MOAILuaState& state ) {
 	
 	luaL_Reg regTable [] = {
+		{ "getTransform",			_getTransform },
 		{ "reserve",				_reserve },
 		{ "setTransform",			_setTransform },
 		{ NULL, NULL }

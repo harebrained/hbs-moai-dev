@@ -1522,12 +1522,13 @@ void MOAIGfxDevice::SetVertexTransform ( u32 id, const USMatrix4x4& transform ) 
 }
 
 //----------------------------------------------------------------//
-void MOAIGfxDevice::SetVertexTransformList( u32 idx, MOAITransformList* transforms )
+void MOAIGfxDevice::SetVertexTransformList( MOAITransformList* transforms )
 {
 	// TODO: non-gpu skeletal animation?
 	
-	if ( this->mShader ) {
-		this->mShader->SetUniformValue(idx, transforms);
+	if( this->mShader )
+	{
+		this->mShader->UpdateWorldTransformList(transforms);
 	}
 }
 
