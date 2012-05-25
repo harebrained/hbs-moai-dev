@@ -39,7 +39,10 @@ private:
 		PLAYERSCOPE_FRIENDS
 	};
 	
+	
+	MOAILuaRef					mGetFriendsListCallback;
 	MOAILuaRef					mGetScoresCallback;
+	MOAILuaRef					mGetUserInfoCallback;
 	BOOL						mIsGameCenterSupported;
 	MoaiLeaderboardDelegate*	mLeaderboardDelegate;
 	MoaiAchievementDelegate*	mAchievementDelegate;
@@ -48,11 +51,16 @@ private:
 	
 	//----------------------------------------------------------------//
 	static int		_authenticatePlayer			( lua_State* L );
+	static int		_getFriendsList				( lua_State* L );
 	static int		_getPlayerAlias				( lua_State* L );
+	static int		_getPlayerID				( lua_State* L );
 	static int		_getScores					( lua_State* L );
+	static int		_getUserInfo				( lua_State* L );
 	static int		_isSupported				( lua_State* L );
 	static int		_reportAchievementProgress	( lua_State* L );
 	static int		_reportScore				( lua_State* L );
+	static int		_setGetFriendsListCallback	( lua_State* L );
+	static int		_setGetUserInfoCallback		( lua_State* L );
 	static int		_setGetScoresCallback		( lua_State* L );
 	static int		_showDefaultAchievements	( lua_State* L );
 	static int		_showDefaultLeaderboard		( lua_State* L );
@@ -62,7 +70,9 @@ public:
 	DECL_LUA_SINGLETON ( MOAIGameCenter );
 	
 	//----------------------------------------------------------------//
+	void			CallFriendsListCallback			( NSArray* friends);
 	void			CallScoresCallback				( NSArray* scores );
+	void			CallUserInfoCallback			( NSArray* users );
 	void			CreateAchievementDictionary		( NSArray* achievements );
 	void			GetAchievements					();
 	GKAchievement*	GetAchievementFromDictionary	( cc8* identifier );

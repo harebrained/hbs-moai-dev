@@ -5,7 +5,8 @@
 
 #import <moaiext-iphone/MOAIGameCenter.h>
 #import <moaiext-iphone/NSDate+MOAILib.h>
-
+#import <moaiext-iphone/NSDictionary+MOAILib.h>
+#import <moaiext-iphone/NSObject+MOAILib.h>
 
 //================================================================//
 // lua
@@ -60,10 +61,44 @@ int MOAIGameCenter::_authenticatePlayer ( lua_State* L ) {
 int MOAIGameCenter::_getPlayerAlias ( lua_State* L ) {
 	MOAILuaState state ( L );
 	
-	cc8* alias = [ MOAIGameCenter::Get ().mLocalPlayer.alias UTF8String ];
+	cc8* alias = [[ GKLocalPlayer localPlayer ].alias UTF8String ];
 	lua_pushstring ( state, alias );
 	
 	return 1;
+}
+
+int MOAIGameCenter::_getPlayerID ( lua_State* L) {
+	MOAILuaState state ( L );
+	cc8* identifier = [ [ GKLocalPlayer localPlayer ].playerID UTF8String ];
+	lua_pushstring( state, identifier );
+	
+	return 1;
+}
+//----------------------------------------------------------------//
+/**	@name	getGetFriendsList
+ @text	Returns the user's friends list in table format.
+ 
+ */
+int MOAIGameCenter::_getFriendsList	( lua_State* L ){
+	MOAILuaState state ( L );
+	
+	GKLocalPlayer *lp = [GKLocalPlayer localPlayer];
+	
+	if (lp.authenticated)
+	{
+		[lp loadFriendsWithCompletionHandler:^(NSArray *friends, NSError *error){
+			
+			if ( error != nil ) {
+				printf ( "Error in getting GameCenter friends list: %d\n", [ error code ]);
+            }
+			if(friends != nil)
+			{
+				MOAIGameCenter::Get ().CallFriendsListCallback( friends );
+			}
+		}];
+	}
+	
+	return 0;
 }
 
 //----------------------------------------------------------------//
@@ -108,6 +143,55 @@ int MOAIGameCenter::_getScores ( lua_State* L ) {
 		}];
     }
 	
+	return 0;
+}
+
+//----------------------------------------------------------------//
+/**	@name	getUserInfo
+ @text	Returns the information of a game center player based on
+		the provided game center identifier.
+ 
+ @in	string		user identifier
+ */
+int MOAIGameCenter::_getUserInfo( lua_State* L ) {
+	MOAILuaState state ( L );
+	
+	NSArray *params = NULL;
+	if( lua_type(L, 1) == LUA_TSTRING)
+	{
+		cc8* identifiers = state.GetValue < cc8* >( 1, NULL );
+		NSString *str = [NSString stringWithUTF8String:identifiers];
+		params = [str componentsSeparatedByString:@","];
+	}
+	else if ( lua_type(L, 1) == LUA_TTABLE )
+	{
+		NSDictionary *ids = (NSDictionary *)[NSObject objectFromLua:L stackIndex:1];
+		NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:ids.count];
+		for(id item in ids)
+			[list addObject:[ids objectForKey:item]];
+		
+		params = [NSArray arrayWithArray:list];
+	}
+	
+	if(!params)
+	{
+		printf("GameCenter Get User Info requires a string or table as it's first parameter.");
+		return 0;
+	}
+	
+	
+	
+	[GKPlayer loadPlayersForIdentifiers:params withCompletionHandler:^(NSArray *players, NSError *error){
+		
+		if ( error != nil ) {
+			printf ( "Error in getting GameCenter user info: %d\n", [ error code ]);
+		}
+		if(players != nil)
+		{
+			MOAIGameCenter::Get ().CallUserInfoCallback( players );
+		}
+		
+	}];
 	return 0;
 }
 
@@ -167,6 +251,22 @@ int MOAIGameCenter::_reportScore ( lua_State* L ) {
 }
 
 //----------------------------------------------------------------//
+/**	@name	setGetFriendsListCallabck
+ @text	Sets the function to be called upon a successfule 'getFriendsList' call.
+ 
+ @in		function	getFriendsListCallback
+ @out	nil
+ */
+int MOAIGameCenter::_setGetFriendsListCallback	( lua_State* L ) {
+	MOAILuaState state ( L );
+	
+	MOAIGameCenter::Get ().mGetFriendsListCallback.SetStrongRef ( state, 1 );
+	
+	return 0;
+	
+}
+
+//----------------------------------------------------------------//
 /**	@name	setGetScoresCallabck
 	@text	Sets the function to be called upon a successfule 'getScores' call.
 			
@@ -178,6 +278,21 @@ int MOAIGameCenter::_setGetScoresCallback ( lua_State* L ) {
 
 	MOAIGameCenter::Get ().mGetScoresCallback.SetStrongRef ( state, 1 );
 		
+	return 0;
+}
+
+//----------------------------------------------------------------//
+/**	@name	setGetUserInfoCallabck
+ @text	Sets the function to be called upon a successfule 'getUserInfo' call.
+ 
+ @in		function	getUserInfoCallback
+ @out	nil
+ */
+int MOAIGameCenter::_setGetUserInfoCallback ( lua_State* L ) {
+	MOAILuaState state ( L );
+	
+	MOAIGameCenter::Get ().mGetUserInfoCallback.SetStrongRef ( state, 1 );
+	
 	return 0;
 }
 
@@ -237,6 +352,24 @@ int MOAIGameCenter::_showDefaultLeaderboard ( lua_State* L ) {
 //================================================================//
 
 //----------------------------------------------------------------//
+void MOAIGameCenter::CallFriendsListCallback(NSArray* friends){
+	
+	if( mGetFriendsListCallback && [friends count] > 0 ){
+		MOAILuaStateHandle state = mGetFriendsListCallback.GetSelf ();
+		lua_newtable ( state );
+		int count = 1;
+		for( id buddy in friends){
+			lua_pushnumber(state, count);
+			lua_pushstring(state, [buddy UTF8String]);
+			lua_settable ( state, -3 );
+			count++;
+		}
+		state.DebugCall ( 1, 0 );
+	}
+	
+}
+
+//----------------------------------------------------------------//
 void MOAIGameCenter::CallScoresCallback ( NSArray* scores ) {
 
 	if ( mGetScoresCallback && [ scores count ] > 0 ) {
@@ -265,6 +398,42 @@ void MOAIGameCenter::CallScoresCallback ( NSArray* scores ) {
 			lua_pushstring( state, "date");
 			[[ score date ] toLua:state ];
 			lua_settable ( state, -3 );
+		}
+		
+		state.DebugCall ( 1, 0 );
+	}
+}
+
+//----------------------------------------------------------------//
+void MOAIGameCenter::CallUserInfoCallback ( NSArray* users ) {
+	
+	if ( mGetUserInfoCallback && [ users count ] > 0 ) {
+		
+		MOAILuaStateHandle state = mGetUserInfoCallback.GetSelf ();
+
+		lua_newtable ( state );
+		
+		int i = 1;
+		for ( GKPlayer* user  in users ) {
+			
+
+			lua_newtable( state );
+			lua_pushstring( state, "alias");
+			lua_pushstring ( state, [user.alias UTF8String ]);
+			lua_settable ( state, -3 );			
+			
+			lua_pushstring( state, "isFriend");
+			lua_pushboolean( state, user.isFriend);
+			lua_settable ( state, -3 );
+			
+			lua_pushstring( state, "playerID");
+			lua_pushstring ( state, [user.playerID UTF8String ]);
+			lua_settable ( state, -3 );
+			
+			lua_pushinteger( state, i);
+			lua_insert(state, -2);
+			lua_settable ( state, -3 );
+			i++;
 		}
 		
 		state.DebugCall ( 1, 0 );
@@ -340,12 +509,17 @@ void MOAIGameCenter::RegisterLuaClass ( MOAILuaState& state ) {
 	
 	luaL_Reg regTable[] = {
 		{ "authenticatePlayer",			_authenticatePlayer },
-		{ "getPlayerAlias",					_getPlayerAlias },
+		{ "getFriendsList",				_getFriendsList },
+		{ "getPlayerAlias",				_getPlayerAlias },
+		{ "getPlayerID",				_getPlayerID },
 		{ "getScores",					_getScores },
+		{ "getUserInfo",				_getUserInfo },
 		{ "isSupported",				_isSupported },
 		{ "reportAchievementProgress",	_reportAchievementProgress },
 		{ "reportScore",				_reportScore },
+		{ "setGetFriendsListCallback",	_setGetFriendsListCallback },
 		{ "setGetScoresCallback",		_setGetScoresCallback },
+		{ "setGetUserInfoCallback",		_setGetUserInfoCallback },
 		{ "showDefaultAchievements",	_showDefaultAchievements },
 		{ "showDefaultLeaderboard",		_showDefaultLeaderboard },
 		{ NULL, NULL }
