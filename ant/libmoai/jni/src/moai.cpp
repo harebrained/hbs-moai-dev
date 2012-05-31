@@ -172,6 +172,19 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	jmethodID		mSixWavesTrackInGameItemPurchase;
 	jmethodID		mSixWavesTrackTutorialEvent;
 	
+		// FB
+	jclass			mFBClass;
+	jobject			mFBObject;
+	jmethodID		mFBAPIFunc;
+	jmethodID		mFBGetLoginStatusFunc;
+	jmethodID		mFBIsInitializedFunc;
+	jmethodID		mFBIsSessionValidFunc;
+	jmethodID		mFBInitFunc;
+	jmethodID		mFBLoginFunc;
+	jmethodID		mFBLogoutFunc;
+	MOAILuaRef fbLoginCallback;
+	map<long, MOAILuaRef> mFBCallbackMap;
+	
 	//----------------------------------------------------------------//
 	int JNI_OnLoad ( JavaVM* vm, void* reserved ) {
     
@@ -461,6 +474,165 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	}
 		
 //================================================================//
+// Facebook
+//================================================================//
+static void PushErrorTable(lua_State *L, int errorCode, cc8* errorMessage)
+{
+	lua_newtable(L);
+	
+	lua_pushnumber(L, errorCode);
+	lua_setfield(L, -2, "code");
+	
+	lua_pushstring(L, errorMessage);
+	lua_setfield(L, -2, "message");
+}
+static int FB_api(lua_State *L)
+{
+	// Check for operational facebook
+	MOAILuaState state ( L );
+	GET_ENV();
+	if(!env->CallBooleanMethod(mFBObject, mFBIsInitializedFunc))
+		return 0;
+	if(lua_type(L, 1) != LUA_TSTRING)
+	{
+		return 0;
+	}
+	cc8* path = state.GetValue<cc8*>(1, "");
+	int idx = 2;
+	cc8* method = "GET";
+	if(lua_type(L, 2) == LUA_TSTRING)
+	{
+		method = state.GetValue<cc8*>(2, "GET");
+		idx++;
+	}
+
+	cc8* json = "";
+	if( lua_type(L, idx) == LUA_TTABLE )
+	{
+		u32 itr = state.PushTableItr ( idx );
+		while ( state.TableItrNext ( itr ))
+		{
+			json = lua_tostring(state, -1);
+		}
+		idx++;
+	}
+
+	MOAILuaRef callback;
+
+	if(lua_type(L, idx) != LUA_TFUNCTION)
+	{
+		return 0;
+	}
+
+	callback.SetStrongRef(state, idx);
+	long addr = (long)&callback;
+	mFBCallbackMap[addr] = callback;
+	
+	jstring jPath = env->NewStringUTF(path);
+	jstring jMethod = env->NewStringUTF(method);
+	jstring jParams = env->NewStringUTF(json);
+	env->CallVoidMethod(mFBObject, mFBAPIFunc, jPath, jMethod, jParams, addr);
+	if(jPath)
+		env->DeleteLocalRef(jPath);
+	if(jMethod)
+		env->DeleteLocalRef(jMethod);
+	if(jParams)
+		env->DeleteLocalRef(jParams);
+	return 0;
+}
+static int FB_getLoginStatus(lua_State *L)
+{
+	MOAILuaState state ( L );
+	GET_ENV();
+	if(!env->CallBooleanMethod(mFBObject, mFBIsInitializedFunc))
+		return 0;
+
+	if(lua_type(L, 1) != LUA_TFUNCTION)
+	{
+		return 0;
+	}
+	MOAILuaRef callback;
+	callback.SetStrongRef(state, 1);
+	//long addr = (long)&callback;
+
+	// If there isn't a valid session, abort early
+	if(!env->CallBooleanMethod(mFBObject, mFBIsSessionValidFunc))
+	{
+		MOAILuaStateHandle state = callback.GetSelf();
+		lua_newtable(L);
+		lua_pushstring(L, "not connected");
+		lua_setfield(L, -2, "status");
+		PushErrorTable(L, 0, "Existing sesssion is invalid");
+		lua_setfield(L, -2, "error");
+
+		state.DebugCall(1, 0);
+		callback.Clear();
+		return 0;
+	}
+	fbLoginCallback = callback;
+	env->CallVoidMethod(mFBObject, mFBGetLoginStatusFunc);
+	return 0;
+}
+static int FB_init(lua_State *L)
+{
+	MOAILuaState state ( L );
+	GET_ENV();
+
+	if(!lua_isstring(L, 1) )
+	{
+
+		return 0;
+	}
+
+	jstring jAppID = env->NewStringUTF(state.GetValue< cc8* >(1, ""));
+
+	env->CallVoidMethod(mFBObject, mFBInitFunc, jAppID);
+	if(jAppID)
+		env->DeleteLocalRef(jAppID);
+	
+
+
+	return 0;
+}
+static int FB_login(lua_State *L)
+{
+	MOAILuaState state ( L );
+	GET_ENV();
+	if(!env->CallBooleanMethod(mFBObject, mFBIsInitializedFunc))
+		return 0;
+	if(lua_type(L, 1) != LUA_TFUNCTION)
+	{
+		return 0;
+	}
+	cc8* scope = NULL;
+
+	if( lua_type(L, 2) == LUA_TTABLE )
+	{
+		lua_getfield(state, 2, "scope");
+		scope = lua_tostring(state, -1);
+		lua_pop(state, 1);
+	}
+	MOAILuaRef callback;
+	callback.SetStrongRef(state, 1);
+	fbLoginCallback = callback;
+	
+	jstring jScope = env->NewStringUTF(scope);
+	env->CallVoidMethod(mFBObject, mFBLoginFunc, jScope);
+	if(jScope)
+		env->DeleteLocalRef(jScope);
+	
+	
+	return 0;
+}
+static int FB_logout(lua_State *L)
+{
+	MOAILuaState state ( L );
+	GET_ENV();
+	env->CallVoidMethod(mFBObject, mFBLogoutFunc);
+	return 0;
+}
+	
+//================================================================//
 // In-App Billing callbacks
 //================================================================//
 
@@ -712,7 +884,7 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	}
 
 	//----------------------------------------------------------------//
-	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiView_AKUInit ( JNIEnv* env, jclass obj, jobject moaiView, jobject moaiActivity ) {
+	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiView_AKUInit ( JNIEnv* env, jclass obj, jobject moaiView, jobject moaiActivity, jobject moaiFacebook ) {
 
 		// create MOAIApp class
 		MOAIApp::Affirm ();
@@ -812,6 +984,30 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 			
 			luaL_register(state, "SixWaves", regTable);
 			lua_pop(state, 1);
+		}
+#endif
+
+#ifndef DIABLE_FACEBOOK
+		// Facebook social connect
+		mFBClass = env->FindClass ( "com/sixwaves/strikefleetomega/MoaiFacebook" );
+		mFBObject = ( jobject ) env->NewGlobalRef(moaiFacebook);
+		mFBAPIFunc = env->GetMethodID ( mFBClass, "api", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;J)V" );
+		mFBGetLoginStatusFunc = env->GetMethodID ( mFBClass, "getLoginStatus", "()V" );
+		mFBIsInitializedFunc = env->GetMethodID ( mFBClass, "isInitialized", "()Z" );
+		mFBIsSessionValidFunc = env->GetMethodID ( mFBClass, "isSessionValid", "()Z" );
+		mFBInitFunc = env->GetMethodID ( mFBClass, "init", "(Ljava/lang/String;)V" );
+		mFBLoginFunc = env->GetMethodID ( mFBClass, "login", "(Ljava/lang/String;)V" );
+		mFBLogoutFunc = env->GetMethodID ( mFBClass, "logout", "()V" );
+		{
+			luaL_Reg regTable [] = {
+				{ "api",	FB_api },
+				{ "getLoginStatus", FB_getLoginStatus},
+				{ "init", FB_init},
+				{ "login", FB_login},
+				{ "logout", FB_logout},
+				{ NULL, NULL }
+			};
+			luaL_register( state, "FB", regTable );
 		}
 #endif
 	}
@@ -1095,4 +1291,43 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 		}
 
 		AKUUpdate ();
+	}
+	
+	//----------------------------------------------------------------//
+	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiFacebook_FBAPICallback ( JNIEnv* env, jclass obj, jstring jresult, long callbackAddr ) {
+		
+		//std::map<long, MOAILuaRef>::iterator entry = mFBCallbackMap.find(callbackAddr);
+		if(mFBCallbackMap.find(callbackAddr) != mFBCallbackMap.end())
+		{
+			MOAILuaRef& callback = mFBCallbackMap[callbackAddr];
+			if( callback ) {
+				MOAILuaStateHandle state = callback.GetSelf();
+				GET_CSTRING ( jresult, result );
+				lua_pushstring(state, result);
+				RELEASE_CSTRING ( jresult, result );
+				state.DebugCall( 1 , 0 );
+			}
+		}
+	}
+	//----------------------------------------------------------------//
+	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiFacebook_FBLoginStatusCallback ( JNIEnv* env, jclass obj, jstring jresult ) {
+		MOAILuaRef& callback = fbLoginCallback;
+		if( callback ) {
+			MOAILuaStateHandle state = callback.GetSelf();
+			GET_CSTRING ( jresult, result );
+			lua_pushstring(state, result);
+			RELEASE_CSTRING ( jresult, result );
+			state.DebugCall( 1 , 0 );
+		}
+	}
+	//----------------------------------------------------------------//
+	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiFacebook_FBLoginCallback ( JNIEnv* env, jclass obj, jstring jresult ) {
+		MOAILuaRef& callback = fbLoginCallback;
+		if( callback ) {
+			MOAILuaStateHandle state = callback.GetSelf();
+			GET_CSTRING ( jresult, result );
+			lua_pushstring(state, result);
+			RELEASE_CSTRING ( jresult, result );
+			state.DebugCall( 1 , 0 );
+		}
 	}
