@@ -379,7 +379,7 @@ void MOAIShaderUniform::SetValue ( MOAITransformList* transforms ) {
 		this->mBuffer.Grow ( 16 * n );
 	
 		for (u32 i = 0; i < n; i++) {
-			MOAITransformBase* t = transforms->GetTransform(i);
+			MOAITransform* t = transforms->GetTransform(i);
 			if( t ) {
 				float *m = this->mBuffer.Data() + 16 * i;
 				
@@ -404,6 +404,15 @@ void MOAIShaderUniform::SetValue ( MOAITransformList* transforms ) {
 				m [ 13 ]	= value.m [ AffineElem3D::C3_R1 ];
 				m [ 14 ]	= value.m [ AffineElem3D::C3_R2 ];
 				m [ 15 ]	= 1;
+				
+				// We rely on the fact that USMatrix4x4 is the same size
+				// and layout as what we're going to feed OpenGL in a bit
+				// and let it do our bind pose multiplication.
+				
+				USMatrix4x4	*M = (USMatrix4x4*)m;
+				M->Prepend(t->GetInvBindPoseMtx());
+				
+				int breakme = true;
 			}
 		}
 		
