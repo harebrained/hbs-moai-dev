@@ -162,6 +162,7 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	jmethodID		mFlurrySetUserID;
 	jmethodID		mFlurrySetAge;
 	jmethodID		mFlurrySetGender;
+	jmethodID		mMoaiFlurryLogEvent;
 	
 	jmethodID		mSixWavesCrossSell;
 	jmethodID   	mSixWavesHideAdBanner;
@@ -356,11 +357,76 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 		GET_ENV();
 		jstring evt = env->NewStringUTF(lua_tostring(L, 1));
 		
+		jobjectArray items;
+		int idx = 2;
+		int table_count = 0;
 		if( lua_type(L, 2) == LUA_TTABLE )
 		{
 			// TODO: Implement parameter parsing at some point
-			PRINT("WARNING: Dropping parameters for Flurry.logEvent()");
-			env->CallStaticVoidMethod( mFlurryClass, mFlurryLogEvent, evt );
+			//PRINT("WARNING: Dropping parameters for Flurry.logEvent()");
+			//env->CallStaticVoidMethod( mFlurryClass, mFlurryLogEvent, evt );
+			lua_pushnil( L );
+
+			while( lua_next( L, idx)  != 0 )
+			{
+				int keyType = lua_type(L, -2);
+				int valType = lua_type(L, -1);
+
+				if(( keyType == LUA_TSTRING || keyType == LUA_TNUMBER) &&
+				  ( valType == LUA_TSTRING || valType == LUA_TNUMBER))
+				  table_count +=2;
+				  
+				lua_pop( L, 1 );
+			}
+
+			jstring keyList[table_count];
+			
+			if( table_count > 1 )
+			{
+				items = (jobjectArray)env->NewObjectArray(table_count,
+						 env->FindClass("java/lang/String"),
+						 env->NewStringUTF(""));
+				lua_pushnil( L );
+				int count = 0;
+				idx = 2;
+				while( lua_next( L, idx)  != 0 )
+				{
+					int keyType = lua_type(L, -2);
+					int valType = lua_type(L, -1);
+					if( (keyType != LUA_TSTRING && keyType != LUA_TNUMBER) || 
+						(valType != LUA_TSTRING && valType != LUA_TNUMBER))
+						continue;
+						
+					if( keyType == LUA_TSTRING )
+						env->SetObjectArrayElement( items,count,env->NewStringUTF(lua_tostring(L,-2)));
+					else
+					{
+						float value = lua_tonumber(L, -2);
+						char string[512];
+						sprintf( string, "%f", value );
+						env->SetObjectArrayElement( items,count,env->NewStringUTF(string));
+					}	
+					
+					if( valType == LUA_TSTRING )
+						env->SetObjectArrayElement( items,count+1,env->NewStringUTF(lua_tostring(L,-1)));
+					else
+					{
+						float value = lua_tonumber(L, -1);
+						char string[512];
+						sprintf( string, "%f", value );
+						env->SetObjectArrayElement( items,count+1,env->NewStringUTF(string));
+					}
+					const char *value;
+					
+					count +=2;
+					lua_pop( L, 1 );
+				}
+			}
+			
+			//Log event here
+			env->CallVoidMethod( mMoaiActivity, mMoaiFlurryLogEvent, evt, items);
+			if( table_count > 1 )
+				env->DeleteLocalRef(items);
 		}
 		else
 		{
@@ -998,6 +1064,7 @@ static int FB_logout(lua_State *L)
 		mFBInitFunc = env->GetMethodID ( mFBClass, "init", "(Ljava/lang/String;)V" );
 		mFBLoginFunc = env->GetMethodID ( mFBClass, "login", "(Ljava/lang/String;)V" );
 		mFBLogoutFunc = env->GetMethodID ( mFBClass, "logout", "()V" );
+		mMoaiFlurryLogEvent  = env->GetMethodID ( moaiActivityClass, "FlurryLogEvent", "(Ljava/lang/String;[Ljava/lang/Object;)V" );
 		{
 			luaL_Reg regTable [] = {
 				{ "api",	FB_api },
