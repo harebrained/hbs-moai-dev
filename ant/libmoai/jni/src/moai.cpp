@@ -1367,7 +1367,7 @@ static int FB_logout(lua_State *L)
 		if(mFBCallbackMap.find(callbackAddr) != mFBCallbackMap.end())
 		{
 			MOAILuaRef& callback = mFBCallbackMap[callbackAddr];
-			if( callback ) {
+			if( callback && !callback.IsNil() ) {
 				MOAILuaStateHandle state = callback.GetSelf();
 				GET_CSTRING ( jresult, result );
 				lua_pushstring(state, result);
@@ -1379,7 +1379,7 @@ static int FB_logout(lua_State *L)
 	//----------------------------------------------------------------//
 	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiFacebook_FBLoginStatusCallback ( JNIEnv* env, jclass obj, jstring jresult ) {
 		MOAILuaRef& callback = fbLoginCallback;
-		if( callback ) {
+		if( callback && !callback.IsNil() ) {
 			MOAILuaStateHandle state = callback.GetSelf();
 			GET_CSTRING ( jresult, result );
 			lua_pushstring(state, result);
@@ -1390,7 +1390,7 @@ static int FB_logout(lua_State *L)
 	//----------------------------------------------------------------//
 	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiFacebook_FBLoginCallback ( JNIEnv* env, jclass obj, jstring jresult ) {
 		MOAILuaRef& callback = fbLoginCallback;
-		if( callback ) {
+		if( callback  && !callback.IsNil() ) {
 			MOAILuaStateHandle state = callback.GetSelf();
 			GET_CSTRING ( jresult, result );
 			lua_pushstring(state, result);
