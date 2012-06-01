@@ -1369,10 +1369,11 @@ static int FB_logout(lua_State *L)
 			MOAILuaRef& callback = mFBCallbackMap[callbackAddr];
 			if( callback && !callback.IsNil() ) {
 				MOAILuaStateHandle state = callback.GetSelf();
+				callback.Clear();
 				GET_CSTRING ( jresult, result );
 				lua_pushstring(state, result);
-				RELEASE_CSTRING ( jresult, result );
 				state.DebugCall( 1 , 0 );
+				RELEASE_CSTRING ( jresult, result );
 			}
 		}
 	}
@@ -1381,10 +1382,11 @@ static int FB_logout(lua_State *L)
 		MOAILuaRef& callback = fbLoginCallback;
 		if( callback && !callback.IsNil() ) {
 			MOAILuaStateHandle state = callback.GetSelf();
+			callback.Clear();
 			GET_CSTRING ( jresult, result );
 			lua_pushstring(state, result);
-			RELEASE_CSTRING ( jresult, result );
 			state.DebugCall( 1 , 0 );
+			RELEASE_CSTRING ( jresult, result );
 		}
 	}
 	//----------------------------------------------------------------//
@@ -1392,9 +1394,10 @@ static int FB_logout(lua_State *L)
 		MOAILuaRef& callback = fbLoginCallback;
 		if( callback  && !callback.IsNil() ) {
 			MOAILuaStateHandle state = callback.GetSelf();
+			callback.Clear();
 			GET_CSTRING ( jresult, result );
 			lua_pushstring(state, result);
-			RELEASE_CSTRING ( jresult, result );
 			state.DebugCall( 1 , 0 );
+			RELEASE_CSTRING ( jresult, result );
 		}
 	}
