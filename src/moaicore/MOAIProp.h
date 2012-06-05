@@ -26,6 +26,7 @@ class MOAIPartitionResultBuffer;
 class MOAIShader;
 class MOAISurfaceSampler2D;
 class MOAITextureBase;
+class MOAITransformList;
 
 //================================================================//
 // MOAIProp
@@ -114,6 +115,7 @@ private:
 	static int		_setPriority		( lua_State* L );
 	static int		_setRemapper		( lua_State* L );
 	static int		_setShader			( lua_State* L );
+	static int		_setSkeleton		( lua_State* L );
 	static int		_setTexture			( lua_State* L );
 	static int		_setUVTransform		( lua_State* L );
 	static int		_setVisible			( lua_State* L );
@@ -130,6 +132,8 @@ protected:
 	MOAILuaSharedPtr < MOAIShader >			mShader;
 	MOAILuaSharedPtr < MOAIGfxState >		mTexture;
 	MOAILuaSharedPtr < MOAITransformBase >	mUVTransform;
+		
+	MOAILuaSharedPtr < MOAITransformList >  mSkeleton;
 	
 	USBox						mFrame;
 	bool						mFitToFrame;

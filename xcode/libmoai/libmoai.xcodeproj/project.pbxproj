@@ -1542,6 +1542,10 @@
 		83202DE61551DF6200D67D4F /* MOAITextBundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 83202DE31551DF6200D67D4F /* MOAITextBundle.cpp */; };
 		83202DE71551DF6200D67D4F /* MOAITextBundle.h in Headers */ = {isa = PBXBuildFile; fileRef = 83202DE41551DF6200D67D4F /* MOAITextBundle.h */; };
 		83202DE81551DF6200D67D4F /* MOAITextBundle.h in Headers */ = {isa = PBXBuildFile; fileRef = 83202DE41551DF6200D67D4F /* MOAITextBundle.h */; };
+		835DC59E155DB9CA00EA2989 /* MOAITransformList.h in Headers */ = {isa = PBXBuildFile; fileRef = 835DC59D155DB9CA00EA2989 /* MOAITransformList.h */; };
+		835DC5A1155DBACB00EA2989 /* MOAITransformList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 835DC5A0155DBACA00EA2989 /* MOAITransformList.cpp */; };
+		835DC5A2156189D400EA2989 /* MOAITransformList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 835DC5A0155DBACA00EA2989 /* MOAITransformList.cpp */; };
+		835DC5A3156189D800EA2989 /* MOAITransformList.h in Headers */ = {isa = PBXBuildFile; fileRef = 835DC59D155DB9CA00EA2989 /* MOAITransformList.h */; };
 		C359A149143A81BA005E7829 /* RAudioBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = C359A148143A81BA005E7829 /* RAudioBuffer.h */; };
 		C37D422213B16930009600BB /* BufferedAudioSource.h in Headers */ = {isa = PBXBuildFile; fileRef = C37D421E13B1692F009600BB /* BufferedAudioSource.h */; };
 		C37D422413B16930009600BB /* BufferedAudioSourceThread.h in Headers */ = {isa = PBXBuildFile; fileRef = C37D422013B16930009600BB /* BufferedAudioSourceThread.h */; };
@@ -4180,10 +4184,12 @@
 		66D967F914047A2500017919 /* MOAIScriptDeck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MOAIScriptDeck.h; sourceTree = "<group>"; };
 		66DD89231540E7950008E0DB /* MOAIOpenUDID.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MOAIOpenUDID.m; sourceTree = "<group>"; };
 		66DD89261540E7AD0008E0DB /* MOAIOpenUDID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MOAIOpenUDID.h; sourceTree = "<group>"; };
-		83202DDC1551DF2100D67D4F /* MOAIPexPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MOAIPexPlugin.cpp; path = ../../../sbc/moai/src/moaicore/MOAIPexPlugin.cpp; sourceTree = "<group>"; };
-		83202DDD1551DF2100D67D4F /* MOAIPexPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MOAIPexPlugin.h; path = ../../../sbc/moai/src/moaicore/MOAIPexPlugin.h; sourceTree = "<group>"; };
-		83202DE31551DF6200D67D4F /* MOAITextBundle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MOAITextBundle.cpp; path = ../../../sbc/moai/src/moaicore/MOAITextBundle.cpp; sourceTree = "<group>"; };
-		83202DE41551DF6200D67D4F /* MOAITextBundle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MOAITextBundle.h; path = ../../../sbc/moai/src/moaicore/MOAITextBundle.h; sourceTree = "<group>"; };
+		83202DDC1551DF2100D67D4F /* MOAIPexPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MOAIPexPlugin.cpp; sourceTree = "<group>"; };
+		83202DDD1551DF2100D67D4F /* MOAIPexPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MOAIPexPlugin.h; sourceTree = "<group>"; };
+		83202DE31551DF6200D67D4F /* MOAITextBundle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MOAITextBundle.cpp; sourceTree = "<group>"; };
+		83202DE41551DF6200D67D4F /* MOAITextBundle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MOAITextBundle.h; sourceTree = "<group>"; };
+		835DC59D155DB9CA00EA2989 /* MOAITransformList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MOAITransformList.h; sourceTree = "<group>"; };
+		835DC5A0155DBACA00EA2989 /* MOAITransformList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MOAITransformList.cpp; sourceTree = "<group>"; };
 		C359A148143A81BA005E7829 /* RAudioBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RAudioBuffer.h; path = ../../3rdparty/untz/src/RAudioBuffer.h; sourceTree = "<group>"; };
 		C37D421D13B1692F009600BB /* BufferedAudioSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BufferedAudioSource.cpp; path = ../../3rdparty/untz/src/BufferedAudioSource.cpp; sourceTree = "<group>"; };
 		C37D421E13B1692F009600BB /* BufferedAudioSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BufferedAudioSource.h; path = ../../3rdparty/untz/src/BufferedAudioSource.h; sourceTree = "<group>"; };
@@ -7168,6 +7174,8 @@
 				0324E59D13564BC8000ADC60 /* MOAITransform.h */,
 				0324E59E13564BC8000ADC60 /* MOAITransformBase.cpp */,
 				0324E59F13564BC8000ADC60 /* MOAITransformBase.h */,
+				835DC5A0155DBACA00EA2989 /* MOAITransformList.cpp */,
+				835DC59D155DB9CA00EA2989 /* MOAITransformList.h */,
 			);
 			name = transform;
 			sourceTree = "<group>";
@@ -9938,6 +9946,7 @@
 				CD19AA0B151AF7E2006A1F9D /* USUnique.h in Headers */,
 				83202DE11551DF2100D67D4F /* MOAIPexPlugin.h in Headers */,
 				83202DE81551DF6200D67D4F /* MOAITextBundle.h in Headers */,
+				835DC5A3156189D800EA2989 /* MOAITransformList.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -10623,6 +10632,7 @@
 				E98DBDD71537A33100514387 /* AKU-chartboost.h in Headers */,
 				83202DE01551DF2100D67D4F /* MOAIPexPlugin.h in Headers */,
 				83202DE71551DF6200D67D4F /* MOAITextBundle.h in Headers */,
+				835DC59E155DB9CA00EA2989 /* MOAITransformList.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11705,6 +11715,7 @@
 				CD19AA09151AF7E2006A1F9D /* USUnique_linux.cpp in Sources */,
 				83202DDF1551DF2100D67D4F /* MOAIPexPlugin.cpp in Sources */,
 				83202DE61551DF6200D67D4F /* MOAITextBundle.cpp in Sources */,
+				835DC5A2156189D400EA2989 /* MOAITransformList.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -12918,6 +12929,7 @@
 				E98DBDD81537A33100514387 /* AKU-chartboost.mm in Sources */,
 				83202DDE1551DF2100D67D4F /* MOAIPexPlugin.cpp in Sources */,
 				83202DE51551DF6200D67D4F /* MOAITextBundle.cpp in Sources */,
+				835DC5A1155DBACB00EA2989 /* MOAITransformList.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

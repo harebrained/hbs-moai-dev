@@ -10,9 +10,12 @@
 
 class MOAIColor;
 class MOAITransformBase;
+class MOAITransformList;
+
+typedef USLeanArray<USMatrix4x4> USMatrix4x4Array;
 	
-#define		OPENGL_PREPROC		"#define LOWP\n #define MEDP\n"
-#define		OPENGL_ES_PREPROC	"#define LOWP lowp\n #define MEDP mediump\n"
+#define		OPENGL_PREPROC		"#define LOWP\n #define MEDP\n #define HIGHP\n"
+#define		OPENGL_ES_PREPROC	"#define LOWP lowp\n #define MEDP mediump\n #define HIGHP highp\n"
 
 //================================================================//
 // MOAIShaderUniform
@@ -40,6 +43,7 @@ private:
 	void		Bind						();
 	void		BindPenColor				( float r, float g, float b, float a );
 	void		BindPipelineTransforms		( const USMatrix4x4& world, const USMatrix4x4& view, const USMatrix4x4& proj );
+	void		BindWorldTransformList		( MOAITransformList *transforms );
 	void		Clear						();
 	void		SetBuffer					( void* buffer, size_t size );
 	void		SetType						( u32 type );
@@ -49,6 +53,7 @@ private:
 	void		SetValue					( const USColorVec& value );
 	void		SetValue					( const USAffine3D& value );
 	void		SetValue					( const USMatrix4x4& value );
+	void		SetValue					( MOAITransformList* value );
 
 public:
 
@@ -64,6 +69,8 @@ public:
 		UNIFORM_VIEW_PROJ,
 		UNIFORM_WORLD,
 		UNIFORM_WORLD_VIEW_PROJ,
+		UNIFORM_WORLD_MATRIX_ARRAY,
+		UNIFORM_WORLD_MATRIX_ARRAY_COUNT,
 	};
 
 				MOAIShaderUniform			();
@@ -85,6 +92,7 @@ public:
 	@const	UNIFORM_VIEW_PROJ
 	@const	UNIFORM_WORLD
 	@const	UNIFORM_WORLD_VIEW_PROJ
+	@const	UNIFORM_MATRIX_ARRAY
 */
 class MOAIShader :
 	public virtual MOAINode,
@@ -104,14 +112,14 @@ protected:
 	USLeanArray < MOAIShaderUniform > mUniforms;
 	
 	//----------------------------------------------------------------//
-	static int		_clearUniform			( lua_State* L );
-	static int		_declareUniform			( lua_State* L );
-	static int		_declareUniformFloat	( lua_State* L );
-	static int		_declareUniformInt		( lua_State* L );
-	static int		_declareUniformSampler	( lua_State* L );
-	static int		_load					( lua_State* L );
-	static int		_reserveUniforms		( lua_State* L );
-	static int		_setVertexAttribute		( lua_State* L );
+	static int		_clearUniform				( lua_State* L );
+	static int		_declareUniform				( lua_State* L );
+	static int		_declareUniformFloat		( lua_State* L );
+	static int		_declareUniformInt			( lua_State* L );
+	static int		_declareUniformSampler		( lua_State* L );
+	static int		_load						( lua_State* L );
+	static int		_reserveUniforms			( lua_State* L );
+	static int		_setVertexAttribute			( lua_State* L );
 	
 	//----------------------------------------------------------------//
 	GLuint			CompileShader				( GLuint type,  cc8* source );
@@ -125,6 +133,7 @@ protected:
 	void			OnLoad						();
 	void			UpdatePenColor				( float r, float g, float b, float a );
 	void			UpdatePipelineTransforms	( const USMatrix4x4& world, const USMatrix4x4& view, const USMatrix4x4& proj );
+	void			UpdateWorldTransformList	( MOAITransformList *transforms );
 	bool			Validate					();
 
 public:
@@ -151,6 +160,8 @@ public:
 	void			ReserveAttributes		( u32 nAttributes );
 	void			ReserveUniforms			( u32 nUniforms );
 	void			SetSource				( cc8* vshSource, cc8* fshSource );
+	// TODO: add "direct" setters for other types (so we don't have to use attr bindings)?
+	void			SetUniformValue			( u32 idx, MOAITransformList *transforms );
 	void			SetVertexAttribute		( u32 idx, cc8* attribute );
 };
 

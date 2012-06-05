@@ -15,6 +15,7 @@ class MOAIGfxState;
 class MOAIMultiTexture;
 class MOAIShader;
 class MOAITextureBase;
+class MOAITransformList;
 class MOAIVertexFormat;
 class MOAIViewport;
 
@@ -95,7 +96,7 @@ private:
 	USMatrix4x4		mCpuVertexTransformMtx; // composition of matrices to be applied via CPU
 	bool			mCpuVertexTransformCache [ TOTAL_VTX_TRANSFORMS ];
 	USMatrix4x4		mCpuVertexTransformCacheMtx [ TOTAL_VTX_TRANSFORMS ]; // composition of VIEW and PROJ matrices via CPU
-
+		
 	bool			mCpuUVTransform;
 	
 	GLuint			mDefaultFrameBuffer;
@@ -301,6 +302,7 @@ public:
 	void					SetVertexTransform		( u32 id );
 	void					SetVertexTransform		( u32 id, const USAffine3D& transform );
 	void					SetVertexTransform		( u32 id, const USMatrix4x4& transform );
+	void					SetVertexTransformList  ( MOAITransformList* transforms );
 	
 	void					SetViewport				();
 	void					SetViewport				( const USRect& viewport );

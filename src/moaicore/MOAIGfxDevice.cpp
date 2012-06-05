@@ -1522,6 +1522,17 @@ void MOAIGfxDevice::SetVertexTransform ( u32 id, const USMatrix4x4& transform ) 
 }
 
 //----------------------------------------------------------------//
+void MOAIGfxDevice::SetVertexTransformList( MOAITransformList* transforms )
+{
+	// TODO: non-gpu skeletal animation?
+	
+	if( this->mShader )
+	{
+		this->mShader->UpdateWorldTransformList(transforms);
+	}
+}
+
+//----------------------------------------------------------------//
 void MOAIGfxDevice::SetViewport () {
 
 	float width = ( float )this->mWidth;
