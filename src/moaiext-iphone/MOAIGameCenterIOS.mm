@@ -5,6 +5,8 @@
 
 #import <moaiext-iphone/MOAIGameCenterIOS.h>
 #import <moaiext-iphone/NSDate+MOAILib.h>
+#import <moaiext-iphone/NSDictionary+MOAILib.h>
+#import <moaiext-iphone/NSObject+MOAILib.h>
 
 //================================================================//
 // lua
@@ -70,6 +72,40 @@ int MOAIGameCenterIOS::_getPlayerAlias ( lua_State* L ) {
 	return 1;
 }
 
+int MOAIGameCenter::_getPlayerID ( lua_State* L) {
+	MOAILuaState state ( L );
+	cc8* identifier = [ [ GKLocalPlayer localPlayer ].playerID UTF8String ];
+	lua_pushstring( state, identifier );
+	
+	return 1;
+}
+//----------------------------------------------------------------//
+/**	@name	getGetFriendsList
+ @text	Returns the user's friends list in table format.
+ 
+ */
+int MOAIGameCenter::_getFriendsList	( lua_State* L ){
+	MOAILuaState state ( L );
+	
+	GKLocalPlayer *lp = [GKLocalPlayer localPlayer];
+	
+	if (lp.authenticated)
+	{
+		[lp loadFriendsWithCompletionHandler:^(NSArray *friends, NSError *error){
+			
+			if ( error != nil ) {
+				printf ( "Error in getting GameCenter friends list: %d\n", [ error code ]);
+            }
+			if(friends != nil)
+			{
+				MOAIGameCenter::Get ().CallFriendsListCallback( friends );
+			}
+		}];
+	}
+	
+	return 0;
+}
+
 //----------------------------------------------------------------//
 /**	@name	getScores
 	@text	Returns the top ten scores of everyone for all-time. 
@@ -123,6 +159,55 @@ int MOAIGameCenterIOS::_getScores ( lua_State* L ) {
 		}];
     }
 	
+	return 0;
+}
+
+//----------------------------------------------------------------//
+/**	@name	getUserInfo
+ @text	Returns the information of a game center player based on
+		the provided game center identifier.
+ 
+ @in	string		user identifier
+ */
+int MOAIGameCenterIOS::_getUserInfo( lua_State* L ) {
+	MOAILuaState state ( L );
+	
+	NSArray *params = NULL;
+	if( lua_type(L, 1) == LUA_TSTRING)
+	{
+		cc8* identifiers = state.GetValue < cc8* >( 1, NULL );
+		NSString *str = [NSString stringWithUTF8String:identifiers];
+		params = [str componentsSeparatedByString:@","];
+	}
+	else if ( lua_type(L, 1) == LUA_TTABLE )
+	{
+		NSDictionary *ids = (NSDictionary *)[NSObject objectFromLua:L stackIndex:1];
+		NSMutableArray *list = [[NSMutableArray alloc] initWithCapacity:ids.count];
+		for(id item in ids)
+			[list addObject:[ids objectForKey:item]];
+		
+		params = [NSArray arrayWithArray:list];
+	}
+	
+	if(!params)
+	{
+		printf("GameCenter Get User Info requires a string or table as it's first parameter.");
+		return 0;
+	}
+	
+	
+	
+	[GKPlayer loadPlayersForIdentifiers:params withCompletionHandler:^(NSArray *players, NSError *error){
+		
+		if ( error != nil ) {
+			printf ( "Error in getting GameCenter user info: %d\n", [ error code ]);
+		}
+		if(players != nil)
+		{
+			MOAIGameCenter::Get ().CallUserInfoCallback( players );
+		}
+		
+	}];
 	return 0;
 }
 
@@ -194,6 +279,22 @@ int MOAIGameCenterIOS::_reportScore ( lua_State* L ) {
 }
 
 //----------------------------------------------------------------//
+/**	@name	setGetFriendsListCallabck
+ @text	Sets the function to be called upon a successfule 'getFriendsList' call.
+ 
+ @in		function	getFriendsListCallback
+ @out	nil
+ */
+int MOAIGameCenter::_setGetFriendsListCallback	( lua_State* L ) {
+	MOAILuaState state ( L );
+	
+	MOAIGameCenter::Get ().mGetFriendsListCallback.SetStrongRef ( state, 1 );
+	
+	return 0;
+	
+}
+
+//----------------------------------------------------------------//
 /**	@name	setGetScoresCallabck
 	@text	Sets the function to be called upon a successful '
 			getScores () call.
@@ -207,6 +308,21 @@ int MOAIGameCenterIOS::_setGetScoresCallback ( lua_State* L ) {
 
 	MOAIGameCenterIOS::Get ().mGetScoresCallback.SetStrongRef ( state, 1 );
 		
+	return 0;
+}
+
+//----------------------------------------------------------------//
+/**	@name	setGetUserInfoCallabck
+ @text	Sets the function to be called upon a successfule 'getUserInfo' call.
+ 
+ @in		function	getUserInfoCallback
+ @out	nil
+ */
+int MOAIGameCenter::_setGetUserInfoCallback ( lua_State* L ) {
+	MOAILuaState state ( L );
+	
+	MOAIGameCenter::Get ().mGetUserInfoCallback.SetStrongRef ( state, 1 );
+	
 	return 0;
 }
 
