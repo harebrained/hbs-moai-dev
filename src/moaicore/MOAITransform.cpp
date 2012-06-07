@@ -120,40 +120,40 @@ int MOAITransform::_addScl ( lua_State* L ) {
  
  @in		MOAITransform self
  @out		number c0r0
- @out		number c0r1
- @out		number c0r2
- @out		number c0r3
  @out		number c1r0
- @out		number c1r1
- @out		number c1r2
- @out		number c1r3
  @out		number c2r0
- @out		number c2r1
- @out		number c2r2
- @out		number c2r3
  @out		number c3r0
+ @out		number c0r1
+ @out		number c1r1
+ @out		number c2r1
  @out		number c3r1
+ @out		number c0r2
+ @out		number c1r2
+ @out		number c2r2
  @out		number c3r2
+ @out		number c0r3
+ @out		number c1r3
+ @out		number c2r3
  @out		number c3r3
 */
 int MOAITransform::_getInvBindPose( lua_State *L ) {
 	MOAI_LUA_SETUP ( MOAITransform, "U" )
 
 	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C0_R0]);
-	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C0_R1]);
-	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C0_R2]);
-	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C0_R3]);
 	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C1_R0]);
-	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C1_R1]);
-	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C1_R2]);
-	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C1_R3]);
 	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C2_R0]);
-	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C2_R1]);
-	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C2_R2]);
-	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C2_R3]);
 	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C3_R0]);
+	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C0_R1]);
+	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C1_R1]);
+	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C2_R1]);
 	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C3_R1]);
+	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C0_R2]);
+	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C1_R2]);
+	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C2_R2]);
 	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C3_R2]);
+	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C0_R3]);
+	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C1_R3]);
+	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C2_R3]);
 	lua_pushnumber(state, self->mInvBindPose.m[USMatrix4x4::C3_R3]);
 
 	return 16;
@@ -797,23 +797,21 @@ int MOAITransform::_setInvBindPose( lua_State *L ) {
 	int top = state.GetTop();
 	if( top == 17 ) {
 		self->mInvBindPose.m[USMatrix4x4::C0_R0] = state.GetValue<float>(2, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C0_R1] = state.GetValue<float>(3, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C0_R2] = state.GetValue<float>(4, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C0_R3] = state.GetValue<float>(5, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C1_R0] = state.GetValue<float>(6, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C1_R0] = state.GetValue<float>(3, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C2_R0] = state.GetValue<float>(4, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C3_R0] = state.GetValue<float>(5, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C0_R1] = state.GetValue<float>(6, 0.0f);
 		self->mInvBindPose.m[USMatrix4x4::C1_R1] = state.GetValue<float>(7, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C1_R2] = state.GetValue<float>(8, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C1_R3] = state.GetValue<float>(9, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C2_R0] = state.GetValue<float>(10, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C2_R1] = state.GetValue<float>(11, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C2_R1] = state.GetValue<float>(8, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C3_R1] = state.GetValue<float>(9, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C0_R2] = state.GetValue<float>(10, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C1_R2] = state.GetValue<float>(11, 0.0f);
 		self->mInvBindPose.m[USMatrix4x4::C2_R2] = state.GetValue<float>(12, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C2_R3] = state.GetValue<float>(13, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C3_R0] = state.GetValue<float>(14, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C3_R1] = state.GetValue<float>(15, 0.0f);
-		self->mInvBindPose.m[USMatrix4x4::C3_R2] = state.GetValue<float>(16, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C3_R2] = state.GetValue<float>(13, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C0_R3] = state.GetValue<float>(14, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C1_R3] = state.GetValue<float>(15, 0.0f);
+		self->mInvBindPose.m[USMatrix4x4::C2_R3] = state.GetValue<float>(16, 0.0f);
 		self->mInvBindPose.m[USMatrix4x4::C3_R3] = state.GetValue<float>(17, 0.0f);
-		self->mInvBindPose.Transpose();
-		int breakme = true;
 	}
 	else if( state.GetValue<bool>(2, false) ) {
 		self->BuildTransforms(0, 0, 0, 1, 1, 1);

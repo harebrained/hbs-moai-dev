@@ -411,8 +411,6 @@ void MOAIShaderUniform::SetValue ( MOAITransformList* transforms ) {
 				
 				USMatrix4x4	*M = (USMatrix4x4*)m;
 				M->Prepend(t->GetInvBindPoseMtx());
-				
-				int breakme = true;
 			}
 		}
 		
