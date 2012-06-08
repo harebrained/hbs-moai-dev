@@ -71,14 +71,13 @@ UInt32 IosSystemData::getNumOutputChannels()
     return mAudioFormat.mChannelsPerFrame;
 }
 
-// from HBS
 static inline SInt16 limit_float_conv_SInt16(float inValue)
 {
 //	const float twoOverPi = 2.0f / 3.14f;
 //    const float gain = 2.0f;
 
 //	int inSign = (1-2*signbit(inValue));
-
+        
     return (SInt16)((1-2*signbit(inValue)) * atanf(fabs(inValue) * 2.0f) * ((2.0f / 3.14f) * 32767));
 }
 
@@ -109,7 +108,7 @@ static OSStatus playbackCallback(void *userData,
     // Grab audio from our mixer.
     float *out_bufs = (float*)&sysData->mOutputBuffer[0];
     sysData->mMixer.process(0, NULL, 2, out_bufs, framesPerBuffer);
-
+	
 	float volume = sysData->mMixer.getVolume();
 	
     // Clip nicely.

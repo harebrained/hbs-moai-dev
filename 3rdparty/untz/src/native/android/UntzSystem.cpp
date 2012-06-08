@@ -177,6 +177,7 @@ void PlaybackThread::run()
     {		
         // Grab the float samples from the mixer.
         mpSystemData->mMixer.process(0, NULL, numChannels, float_buf, framesPerBuffer);
+        float volume = mpSystemData->mMixer.getVolume();
 
 		float volume = mpSystemData->mMixer.getVolume();
         

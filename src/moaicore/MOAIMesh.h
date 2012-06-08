@@ -60,6 +60,8 @@ public:
 					~MOAIMesh				();
 	void			RegisterLuaClass		( MOAILuaState& state );
 	void			RegisterLuaFuncs		( MOAILuaState& state );
+		
+	using MOAIDeck::Draw; // Fix warning: http://lists.apple.com/archives/xcode-users/2005/Dec/msg00738.html
 };
 
 #endif

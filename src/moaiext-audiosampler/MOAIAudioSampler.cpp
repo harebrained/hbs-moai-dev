@@ -122,7 +122,7 @@ void MOAIAudioSampler::globalCallback( void *inUserData,
 int	MOAIAudioSampler::_prepareBuffer ( lua_State* L ) {
     MOAI_LUA_SETUP ( MOAIAudioSampler, "UNN" )
         ;
-    double sec = state.GetValue < float > (2, 1);
+    float sec = state.GetValue < float > (2, 1);
     self->mBufferAryLen = state.GetValue < u32> (3, 5 );
 
     memset( &self->recFmt, 0, sizeof(self->recFmt));
