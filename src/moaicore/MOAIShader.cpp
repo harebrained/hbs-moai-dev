@@ -22,7 +22,7 @@ void MOAIShaderUniform::AddValue ( const MOAIAttrOp& attrOp ) {
 	
 		case UNIFORM_FLOAT: {
 		
-			float value = attrOp.GetValue ();
+			float value = attrOp.GetValue ( 0.0f );
 			
 			if ( value != 0.0f ) {
 				this->mFloat += value;
@@ -32,9 +32,9 @@ void MOAIShaderUniform::AddValue ( const MOAIAttrOp& attrOp ) {
 		}
 		case UNIFORM_INT: {
 		
-			int value = ( int )attrOp.GetValue ();
+			int value = ( int )attrOp.GetValue ( 0 );
 			
-			if ( value != 0.0f ) {
+			if ( value != 0 ) {
 				this->mInt += value;
 				this->mIsDirty = true;
 			}
@@ -75,7 +75,6 @@ void MOAIShaderUniform::Bind () {
 			case UNIFORM_TRANSFORM:
 				glUniformMatrix4fv ( this->mAddr, 1, false, this->mBuffer );
 				break;
-				
 			case UNIFORM_WORLD_MATRIX_ARRAY_COUNT:
 				glUniform1i ( this->mAddr, this->mInt );
 				break;
@@ -88,7 +87,6 @@ void MOAIShaderUniform::Bind () {
 		}
 	}
 }
-
 
 //----------------------------------------------------------------//
 void MOAIShaderUniform::BindPenColor ( float r, float g, float b, float a ) {
@@ -247,31 +245,32 @@ void MOAIShaderUniform::SetValue ( const MOAIAttrOp& attrOp ) {
 	switch ( this->mType ) {
 	
 		case UNIFORM_COLOR: {
-			USColorVec color;
-			attrOp.GetValue < USColorVec >( color );
-			this->SetValue ( color );
+			USColorVec* color = attrOp.GetValue < USColorVec* >( 0 );
+			if ( color ) {
+				this->SetValue ( *color );
+			}
 			break;
 		}	
 		case UNIFORM_FLOAT: {
-			this->SetValue (( float )attrOp.GetValue ());
+			this->SetValue (( float )attrOp.GetValue ( 0.0f ));
 			break;
 		}
 		case UNIFORM_INT:
 		case UNIFORM_SAMPLER: {
-			this->SetValue (( int )attrOp.GetValue ());
+			this->SetValue (( int )attrOp.GetValue ( 0 ));
 			break;
 		}
 		case UNIFORM_TRANSFORM: {
-			USAffine3D* affine = attrOp.GetValue < USAffine3D >();
+			USAffine3D* affine = attrOp.GetValue < USAffine3D* >( 0 );
 			if ( affine ) {
 				this->SetValue ( *affine );
 			}
 			break;
 		}
 		case UNIFORM_WORLD_MATRIX_ARRAY_COUNT: {
-			MOAITransformList** transforms = attrOp.GetValue < MOAITransformList* >();
+			MOAITransformList* transforms = attrOp.GetValue < MOAITransformList* >( 0 );
 			if ( transforms ) {
-				this->SetValue( (int)(*transforms)->Size() );
+				this->SetValue( (int)transforms->Size() );
 			}
 			else {
 				this->SetValue( 0 );
@@ -279,9 +278,9 @@ void MOAIShaderUniform::SetValue ( const MOAIAttrOp& attrOp ) {
 			break;
 		}
 		case UNIFORM_WORLD_MATRIX_ARRAY: {
-			MOAITransformList** transforms = attrOp.GetValue < MOAITransformList* >();
+			MOAITransformList* transforms = attrOp.GetValue < MOAITransformList* >( 0 );
 			if ( transforms ) {
-				this->SetValue( *transforms );
+				this->SetValue( transforms );
 			}
 			break;
 		}
@@ -357,7 +356,6 @@ void MOAIShaderUniform::SetValue ( const USMatrix4x4& value ) {
 	this->SetBuffer ( m, sizeof ( m ));
 }
 
-//----------------------------------------------------------------//
 void MOAIShaderUniform::SetValue ( MOAITransformList* transforms ) {
 
 	// Bypass the normal SetBuffer() to avoid doing an extra memcmp and memcpy.
@@ -526,7 +524,6 @@ int MOAIShader::_declareUniformInt ( lua_State* L ) {
 	return 0;
 }
 
-
 //----------------------------------------------------------------//
 /**	@name	declareUniformSampler
 	@text	Declares an uniform to be used as a texture unit index. This uniform is
@@ -616,12 +613,12 @@ int MOAIShader::_setVertexAttribute ( lua_State* L ) {
 //----------------------------------------------------------------//
 bool MOAIShader::ApplyAttrOp ( u32 attrID, MOAIAttrOp& attrOp, u32 op ) {
 
-	attrID = ( attrID & MOAINode::ATTR_ID_MASK ) - 1;
+	attrID = ( attrID & MOAIAttrOp::ATTR_ID_MASK ) - 1;
 
 	if ( attrID >= this->mUniforms.Size ()) return false;
 
 	if ( op == MOAIAttrOp::CHECK ) {
-		attrOp.SetValid ( true, MOAINode::ATTR_WRITE );
+		attrOp.SetFlags ( MOAIAttrOp::ATTR_WRITE );
 		return true;
 	}
 	
@@ -674,15 +671,13 @@ GLuint MOAIShader::CompileShader ( GLuint type, cc8* source ) {
 	glShaderSource ( shader, 2, sources, NULL );
 	glCompileShader ( shader );
 
-	// Note: Can't safely PrintLog() here because some drivers do not
-	// appear to clear out the log buffer properly (causing garbage to
-	// be printed).
-	
+	this->PrintShaderLog ( shader );
+
 	GLint status;
 	glGetShaderiv ( shader, GL_COMPILE_STATUS, &status );
 
 	if ( status == 0 ) {
-		this->PrintLog ( shader );
+		this->PrintShaderLog ( shader );
 		glDeleteShader ( shader );
 		return 0;
 	}
@@ -805,16 +800,13 @@ void MOAIShader::OnCreate () {
     
     // link program.
 	glLinkProgram ( this->mProgram );
-
-	// Don't PrintLog() unless we know there was a problem (drivers don't
-	// necessarily clear out the log every time, and you could be grabbing
-	// garbage).
+	
+	this->PrintProgramLog ( this->mProgram );
 	
 	GLint status;
 	glGetProgramiv ( this->mProgram, GL_LINK_STATUS, &status );
 	
 	if ( status == 0 ) {
-		this->PrintLog ( this->mProgram );
 		this->Clear ();
 		return;
 	}
@@ -871,18 +863,28 @@ void MOAIShader::OnLoad () {
 }
 
 //----------------------------------------------------------------//
-void MOAIShader::PrintLog ( GLuint shader ) {
+void MOAIShader::PrintShaderLog ( GLuint shader ) {
 	
 	int logLength;
 	glGetShaderiv ( shader, GL_INFO_LOG_LENGTH, &logLength );
-
-	// logLength includes the '\0' so sometimes you get a result that
-	// is simply "\0". Let's avoid printing those useless messages
-	// by making sure at least something else is there.
 	
 	if ( logLength > 1 ) {
 		char* log = ( char* )malloc ( logLength );
 		glGetShaderInfoLog ( shader, logLength, &logLength, log );
+		MOAILog ( 0, MOAILogMessages::MOAIShader_ShaderInfoLog_S, log );
+		free ( log );
+	}
+}
+
+//----------------------------------------------------------------//
+void MOAIShader::PrintProgramLog ( GLuint shader ) {
+	
+	int logLength;
+	glGetProgramiv ( shader, GL_INFO_LOG_LENGTH, &logLength );
+	
+	if ( logLength > 1 ) {
+		char* log = ( char* )malloc ( logLength );
+		glGetProgramInfoLog ( shader, logLength, &logLength, log );
 		MOAILog ( 0, MOAILogMessages::MOAIShader_ShaderInfoLog_S, log );
 		free ( log );
 	}
@@ -944,15 +946,6 @@ void MOAIShader::SetSource ( cc8* vshSource, cc8* fshSource ) {
 }
 
 //----------------------------------------------------------------//
-void MOAIShader::SetUniformValue( u32 idx, MOAITransformList* transforms ) {
-	if ( idx < this->mUniforms.Size () ) {
-		MOAIShaderUniform &uniform = this->mUniforms[idx];
-		uniform.SetValue( transforms );
-		uniform.Bind();
-	}
-}
-
-//----------------------------------------------------------------//
 void MOAIShader::SetVertexAttribute ( u32 idx, cc8* attribute ) {
 
 	if ( attribute ) {
@@ -988,11 +981,21 @@ void MOAIShader::UpdateWorldTransformList ( MOAITransformList *transforms ) {
 //----------------------------------------------------------------//
 bool MOAIShader::Validate () {
 
+    GLint logLength;
+    
     glValidateProgram ( this->mProgram );
+    glGetProgramiv ( this->mProgram, GL_INFO_LOG_LENGTH, &logLength );
+	
+    if ( logLength > 0 ) {
+        char* log = ( char* )malloc ( logLength );
+        glGetProgramInfoLog ( this->mProgram, logLength, &logLength, log );
+        MOAILog ( 0, MOAILogMessages::MOAIShader_ShaderInfoLog_S, log );
+        free ( log );
+    }
+    
 	GLint status;
     glGetProgramiv ( this->mProgram, GL_VALIDATE_STATUS, &status );
     if ( status == 0 ) {
-    	this->PrintLog( this->mProgram );
 		return false;
 	}
 	return true;

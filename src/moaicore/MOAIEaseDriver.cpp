@@ -31,29 +31,45 @@ int MOAIEaseDriver::_reserveLinks ( lua_State* L ) {
 /**	@name	setLink
 	@text	Set the ease for a target node attribute.
 
-	@in		MOAIEaseDriver self
-	@in		number idx				Index of the link;
-	@in		MOAINode target			Target node.
-	@in		number attrID			Index of the attribute to be driven.
-	@in		number value			Value for attribute at the end of the ease.
-	@in		number mode				The ease mode. One of MOAIEaseType.EASE_IN, MOAIEaseType.EASE_OUT, MOAIEaseType.FLAT MOAIEaseType.LINEAR,
-									MOAIEaseType.SMOOTH, MOAIEaseType.SOFT_EASE_IN, MOAIEaseType.SOFT_EASE_OUT, MOAIEaseType.SOFT_SMOOTH. Defaults to MOAIEaseType.SMOOTH.
-	@out	nil
+	@overload	Target is a number.
+
+		@in		MOAIEaseDriver self
+		@in		number idx				Index of the link;
+		@in		MOAINode target			Target node.
+		@in		number attrID			Index of the attribute to be driven.
+		@opt	number value			Value for attribute at the end of the ease. Default is 0.
+		@opt	number mode				The ease mode. One of MOAIEaseType.EASE_IN, MOAIEaseType.EASE_OUT, MOAIEaseType.FLAT MOAIEaseType.LINEAR,
+										MOAIEaseType.SMOOTH, MOAIEaseType.SOFT_EASE_IN, MOAIEaseType.SOFT_EASE_OUT, MOAIEaseType.SOFT_SMOOTH. Defaults to MOAIEaseType.SMOOTH.
+		@out	nil
+	
+	@overload	Target is a node.
+
+		@in		MOAIEaseDriver self
+		@in		number idx				Index of the link;
+		@in		MOAINode target			Target node.
+		@in		number attrID			Index of the attribute to be driven.
+		@in		MOAINode source			Node that you are linking to target.
+		@in		number sourceAttrID		Index of the attribute being linked.
+		@opt	number mode				The ease mode. One of MOAIEaseType.EASE_IN, MOAIEaseType.EASE_OUT, MOAIEaseType.FLAT MOAIEaseType.LINEAR,
+										MOAIEaseType.SMOOTH, MOAIEaseType.SOFT_EASE_IN, MOAIEaseType.SOFT_EASE_OUT, MOAIEaseType.SOFT_SMOOTH. Defaults to MOAIEaseType.SMOOTH.
+		@out	nil
+
+	
 */
 int MOAIEaseDriver::_setLink ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIEaseDriver, "UNUN" );
 	
-	MOAINode* dest = state.GetLuaObject < MOAINode >( 3 );
+	MOAINode* dest = state.GetLuaObject < MOAINode >( 3, true );
 	if ( !dest ) return 0;
 	
 	u32 idx				= state.GetValue < u32 >( 2, 1 ) - 1;
 	u32 destAttrID		= state.GetValue < u32 >( 4, 0 );
 	
-	MOAINode* source = state.GetLuaObject < MOAINode >( 5 );
+	MOAINode* source = state.GetLuaObject < MOAINode >( 5, true );
 	
 	if ( source ) {
 	
-		u32 sourceAttrID	= state.GetValue < u32 >( 6, MOAINode::NULL_ATTR );
+		u32 sourceAttrID	= state.GetValue < u32 >( 6, MOAIAttrOp::NULL_ATTR );
 		u32 mode			= state.GetValue < u32 >( 7, USInterpolate::kSmooth );
 		
 		self->SetLink ( idx, dest, destAttrID, source, sourceAttrID, mode );
@@ -254,7 +270,7 @@ void MOAIEaseDriver::SetLink ( u32 idx, MOAINode* dest, u32 destAttrID, float v1
 		MOAIEaseDriverLink& link = this->mLinks [ idx ];
 
 		link.mSource		= 0;
-		link.mSourceAttrID	= MOAINode::NULL_ATTR;
+		link.mSourceAttrID	= MOAIAttrOp::NULL_ATTR;
 
 		link.mDest			= dest;
 		link.mDestAttrID	= destAttrID;

@@ -83,38 +83,23 @@ int MOAIParticleSystem::_getState ( lua_State* L ) {
 }
 
 //----------------------------------------------------------------//
-/**	@name	isIdle
-	@text	Returns true if the current system is not currently
-			processing any particles.
-	
-	@in		MOAIParticleSystem self
-	@out	boolean whether the system is currently idle
+/**  @name  isIdle	
+  @text  Returns true if the current system is not currently
+      processing any particles.
+  
+  @in    MOAIParticleSystem self
+  @out  boolean whether the system is currently idle	
 */
-int MOAIParticleSystem::_isIdle( lua_State* L ){
-
+int  MOAIParticleSystem::_isIdle( lua_State* L ) {
+	
 	MOAI_LUA_SETUP ( MOAIParticleSystem, "U" )
 
 	bool result = !self->mHead;
 
 	lua_pushboolean ( state, result );
 	return 1;
-}
+}	
 
-//----------------------------------------------------------------//
-/**	@name	setIgnoreLocalTransform
-	@text	Controls whether the local transform matrix will
-			be applied to rendered sprites
-	
-	@in		MOAIParticleSystem self
-	@opt	boolean whether to ignore the local transform
-	@out	nil
-*/
-int	MOAIParticleSystem::_setIgnoreLocalTransform ( lua_State* L ){
-	MOAI_LUA_SETUP ( MOAIParticleSystem, "U" )
-
-	self->mIgnoreLocalTransform = state.GetValue < bool >( 2, true );
-	return 0;
-}
 
 //----------------------------------------------------------------//
 /**	@name	pushParticle
@@ -232,6 +217,22 @@ int MOAIParticleSystem::_reserveStates ( lua_State* L ) {
 }
 
 //----------------------------------------------------------------//
+/**	@name	setComputeBounds
+	@text	Set the a flag controlling whether the particle system
+			re-computes its bounds every frame.
+	
+	@in		MOAIParticleSystem self
+	@opt	boolean computBounds		Default value is false.
+	@out	nil
+*/
+int MOAIParticleSystem::_setComputeBounds ( lua_State* L ) {
+	MOAI_LUA_SETUP ( MOAIParticleSystem, "U" )
+
+	self->mComputeBounds = state.GetValue < bool >( 2, false );
+	return 0;
+}
+
+//----------------------------------------------------------------//
 /**	@name	setSpriteColor
 	@text	Set the color of the most recently added sprite.
 	
@@ -290,7 +291,7 @@ int MOAIParticleSystem::_setState ( lua_State* L ) {
 
 	if ( idx < self->mStates.Size ()) {
 	
-		MOAIParticleState* particleState =  state.GetLuaObject < MOAIParticleState >( 3 );
+		MOAIParticleState* particleState =  state.GetLuaObject < MOAIParticleState >( 3, true );
 		if ( particleState != self->mStates [ idx ]) {
 		
 			self->LuaRetain ( particleState );
@@ -350,9 +351,8 @@ void MOAIParticleSystem::ClearQueue () {
 }
 
 //----------------------------------------------------------------//
-void MOAIParticleSystem::Draw ( int subPrimID, bool reload ) {
+void MOAIParticleSystem::Draw ( int subPrimID ) {
 	UNUSED ( subPrimID );
-	UNUSED ( reload );
 
 	if ( !this->mDeck ) return;
 	
@@ -379,35 +379,22 @@ void MOAIParticleSystem::Draw ( int subPrimID, bool reload ) {
 		base = total % maxSprites;
 		total = maxSprites;
 	}
-
-	if( this->mIgnoreLocalTransform ) {
-		for ( u32 i = 0; i < total; ++i ) {
+	
+	for ( u32 i = 0; i < total; ++i ) {
 		
-			u32 idx = ( base + i ) % maxSprites;
+		u32 idx = ( base + i ) % maxSprites;
 		
-			AKUParticleSprite& sprite = this->mSprites [ idx ];
-			gfxDevice.SetPenColor ( sprite.mRed, sprite.mGreen, sprite.mBlue, sprite.mAlpha );
+		AKUParticleSprite& sprite = this->mSprites [ idx ];
+		gfxDevice.SetPenColor ( sprite.mRed, sprite.mGreen, sprite.mBlue, sprite.mAlpha );
 		
-			spriteMtx.ScRoTr ( sprite.mXScl, sprite.mYScl, 1.0f, 0.0f, 0.0f, sprite.mZRot * ( float )D2R, sprite.mXLoc, sprite.mYLoc, 0.0f );
+		spriteMtx.ScRoTr ( sprite.mXScl, sprite.mYScl, 1.0f, 0.0f, 0.0f, sprite.mZRot * ( float )D2R, sprite.mXLoc, sprite.mYLoc, 0.0f );
 		
-			this->mDeck->Draw ( drawingMtx, this->mIndex + ( u32 )sprite.mGfxID, this->mRemapper );
-		}
-	}
-	else {
-		for ( u32 i = 0; i < total; ++i ) {
+		drawingMtx = this->GetLocalToWorldMtx ();
+		drawingMtx.Append ( spriteMtx );
 		
-			u32 idx = ( base + i ) % maxSprites;
+		gfxDevice.SetVertexTransform ( MOAIGfxDevice::VTX_WORLD_TRANSFORM, drawingMtx );
 		
-			AKUParticleSprite& sprite = this->mSprites [ idx ];
-			gfxDevice.SetPenColor ( sprite.mRed, sprite.mGreen, sprite.mBlue, sprite.mAlpha );
-		
-			spriteMtx.ScRoTr ( sprite.mXScl, sprite.mYScl, 1.0f, 0.0f, 0.0f, sprite.mZRot * ( float )D2R, sprite.mXLoc, sprite.mYLoc, 0.0f );
-		
-			drawingMtx = this->GetLocalToWorldMtx ();
-			drawingMtx.Append ( spriteMtx );
-		
-			this->mDeck->Draw ( drawingMtx, this->mIndex + ( u32 )sprite.mGfxID, this->mRemapper );
-		}
+		this->mDeck->Draw ( this->mIndex + ( u32 )sprite.mGfxID, this->mRemapper );
 	}
 }
 
@@ -426,11 +413,13 @@ void MOAIParticleSystem::EnqueueParticle ( MOAIParticle& particle ) {
 }
 
 //----------------------------------------------------------------//
-u32 MOAIParticleSystem::GetDeckBounds ( USBox& bounds ) {
+u32 MOAIParticleSystem::GetPropBounds ( USBox& bounds ) {
 
-	// TODO: this needs to be computed correctly in PushSprite and not returned as BOUNDS_GLOBAL
-	bounds.Init ( -32.0f, -32.0f, 32.0f, 32.0f, 0.0f, 0.0f );
-	return MOAIProp::BOUNDS_GLOBAL;
+	if ( this->mComputeBounds ) {
+		bounds = this->mParticleBounds;
+		return BOUNDS_OK;
+	}
+	return BOUNDS_GLOBAL;
 }
 
 //----------------------------------------------------------------//
@@ -466,7 +455,8 @@ MOAIParticleSystem::MOAIParticleSystem () :
 	mHead ( 0 ),
 	mTail ( 0 ),
 	mFree ( 0 ),
-	mSpriteTop ( 0 ) {
+	mSpriteTop ( 0 ),
+	mComputeBounds ( false ) {
 	
 	RTTI_BEGIN
 		RTTI_EXTEND ( MOAIProp )
@@ -489,6 +479,8 @@ void MOAIParticleSystem::OnUpdate ( float step ) {
 
 	// clear out the sprites
 	this->mSpriteTop = 0;
+
+	this->mParticleBounds.Init ( 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f );
 
 	// bail if no particles
 	if ( !this->mHead ) return;
@@ -516,6 +508,10 @@ void MOAIParticleSystem::OnUpdate ( float step ) {
 			// and put it back in the queue
 			this->EnqueueParticle ( *particle );
 		}
+	}
+	
+	if ( this->mComputeBounds && this->mSpriteTop ) {
+		this->ScheduleUpdate ();
 	}
 }
 
@@ -572,14 +568,35 @@ bool MOAIParticleSystem::PushSprite ( const AKUParticleSprite& sprite ) {
 
 	u32 size = this->mSprites.Size ();
 	
-	if ( size ) {
+	if ( size && this->mDeck ) {
 	
 		if (( this->mSpriteTop >= size ) && this->mCapSprites ) {
 			return false;
 		}
-	
+		
 		u32 idx = ( this->mSpriteTop++ ) % size;
 		this->mSprites [ idx ] = sprite;
+		
+		// TODO: need to take rotation into account
+		USBox bounds = this->mDeck->GetBounds ( sprite.mGfxID, this->mRemapper );
+		
+		USVec3D offset ( sprite.mXLoc, sprite.mYLoc, 0.0f );
+		USVec3D scale ( sprite.mXScl, sprite.mYScl, 0.0f );
+		
+		bounds.Scale ( scale );
+		
+		float radius = bounds.GetMaxExtent () * 1.4f;
+		bounds.mMin.Init ( -radius, -radius, -radius );
+		bounds.mMax.Init ( radius, radius, radius );
+		
+		bounds.Offset ( offset );
+		
+		if ( this->mSpriteTop == 1 ) {
+			this->mParticleBounds = bounds;
+		}
+		else {
+			this->mParticleBounds.Grow ( bounds );
+		}
 		return true;
 	}
 	return false;
@@ -599,21 +616,21 @@ void MOAIParticleSystem::RegisterLuaFuncs ( MOAILuaState& state ) {
 	MOAIAction::RegisterLuaFuncs ( state );
 	
 	luaL_Reg regTable [] = {
-		{ "capParticles",			_capParticles },
-		{ "capSprites",				_capSprites },
-		{ "clearSprites",			_clearSprites },
-		{ "isIdle",					_isIdle },
-		{ "getState",				_getState },
-		{ "pushParticle",			_pushParticle },
-		{ "pushSprite",				_pushSprite },
-		{ "reserveParticles",		_reserveParticles },
-		{ "reserveSprites",			_reserveSprites },
-		{ "reserveStates",			_reserveStates },
-		{ "setIgnoreLocalTransform", _setIgnoreLocalTransform },
-		{ "setSpriteColor",			_setSpriteColor },
-		{ "setSpriteDeckIdx",		_setSpriteDeckIdx },
-		{ "setState",				_setState },
-		{ "surge",					_surge },
+		{ "capParticles",		_capParticles },
+		{ "capSprites",			_capSprites },
+		{ "clearSprites",		_clearSprites },
+		{ "isIdle",				_isIdle },
+		{ "getState",			_getState },
+		{ "pushParticle",		_pushParticle },
+		{ "pushSprite",			_pushSprite },
+		{ "reserveParticles",	_reserveParticles },
+		{ "reserveSprites",		_reserveSprites },
+		{ "reserveStates",		_reserveStates },
+		{ "setComputeBounds",	_setComputeBounds },
+		{ "setSpriteColor",		_setSpriteColor },
+		{ "setSpriteDeckIdx",	_setSpriteDeckIdx },
+		{ "setState",			_setState },
+		{ "surge",				_surge },
 		{ NULL, NULL }
 	};
 	

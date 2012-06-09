@@ -15,8 +15,15 @@
 #include <moaiext-android/moaiext-jni.h>
 
 #include <aku/AKU.h>
-#include <aku/AKU-untz.h>
 #include <aku/AKU-luaext.h>
+
+#ifdef USE_FMOD
+#include <aku/AKU-fmod-ex.h>
+#endif
+
+#ifdef USE_UNTZ
+#include <aku/AKU-untz.h>
+#endif
 
 //================================================================//
 // Input event locking queue
@@ -262,6 +269,14 @@
 	}
 
 	//----------------------------------------------------------------//
+	extern "C" void Java_com_ziplinegames_moai_Moai_AKUFMODExInit ( JNIEnv* env, jclass obj ) {
+
+#ifdef USE_FMOD
+		AKUFmodExInit ();
+#endif
+	}
+
+	//----------------------------------------------------------------//
 	extern "C" void Java_com_ziplinegames_moai_Moai_AKUInit ( JNIEnv* env, jclass obj ) {
 
 		MOAIAppAndroid::Affirm ();
@@ -269,6 +284,9 @@
 
 		MOAIDialogAndroid::Affirm ();
 		REGISTER_LUA_CLASS ( MOAIDialogAndroid );
+
+		MOAIMoviePlayerAndroid::Affirm ();
+		REGISTER_LUA_CLASS ( MOAIMoviePlayerAndroid );
 
 #ifndef DISABLE_ADCOLONY
 		MOAIAdColonyAndroid::Affirm ();
@@ -329,10 +347,14 @@
 
 		if ( paused ) {
 		
+#ifdef USE_UNTZ
 			AKUUntzSuspend ();
+#endif
 		} else {
 		
+#ifdef USE_UNTZ
 			AKUUntzResume ();
+#endif
 		}		
 	}
 
@@ -383,7 +405,7 @@
 	}
 	
 	//----------------------------------------------------------------//
-	extern "C" void Java_com_ziplinegames_moai_Moai_AKUSetDeviceProperties ( JNIEnv* env, jclass obj, jstring jappName, jstring jappId, jstring jappVersion, jstring jabi, jstring jdevBrand, jstring jdevName, jstring jdevManufacturer, jstring jdevModel, jstring jdevProduct, jstring josBrand, jstring josVersion, jstring judid ) {
+	extern "C" void Java_com_ziplinegames_moai_Moai_AKUSetDeviceProperties ( JNIEnv* env, jclass obj, jstring jappName, jstring jappId, jstring jappVersion, jstring jabi, jstring jdevBrand, jstring jdevName, jstring jdevManufacturer, jstring jdevModel, jstring jdevProduct, jint jnumProcessors, jstring josBrand, jstring josVersion, jstring judid ) {
 
 		JNI_GET_CSTRING ( jappName, appName );
 		JNI_GET_CSTRING ( jappId, appId );
@@ -409,6 +431,7 @@
 		environment.SetValue ( MOAI_ENV_devManufacturer,	devManufacturer );
 		environment.SetValue ( MOAI_ENV_devModel,			devModel );
 		environment.SetValue ( MOAI_ENV_devProduct,			devProduct );
+		environment.SetValue ( MOAI_ENV_numProcessors,		jnumProcessors );
 		environment.SetValue ( MOAI_ENV_osBrand,			osBrand );
 		environment.SetValue ( MOAI_ENV_osVersion,			osVersion );
 		environment.SetValue ( MOAI_ENV_udid,				udid );
@@ -529,7 +552,9 @@
 	//----------------------------------------------------------------//
 	extern "C" void Java_com_ziplinegames_moai_Moai_AKUUntzInit ( JNIEnv* env, jclass obj ) {
 		
+#ifdef USE_UNTZ
 		AKUUntzInit ();
+#endif
 	}
 	
 	//----------------------------------------------------------------//

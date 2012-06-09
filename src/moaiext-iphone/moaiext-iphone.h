@@ -9,6 +9,7 @@
 #import <moaiext-iphone/MOAIFacebookIOS.h>
 #import <moaiext-iphone/MOAIGameCenterIOS.h>
 #import <moaiext-iphone/MOAIKeyboardIOS.h>
+#import <moaiext-iphone/MOAIMoviePlayerIOS.h>
 #import <moaiext-iphone/MOAINotificationsIOS.h>
 #import <moaiext-iphone/MOAISafariIOS.h>
 #import <moaiext-iphone/MOAIStoreKitListener.h>
@@ -27,3 +28,4 @@
 #import <moaiext-iphone/NSString+MOAILib.h>
 #import <moaiext-iphone/Reachability.h>
 
+#define ENABLE_TAPJOY // COMMENT OUT THIS LINE TO DISABLE TAPJOY - THIS IS REQUIRED TO REMOVE TAPJOY CODE FROM HOST

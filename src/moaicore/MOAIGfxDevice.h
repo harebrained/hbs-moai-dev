@@ -46,6 +46,8 @@ public:
 //================================================================//
 /**	@name	MOAIGfxDevice
 	@text	Interface to the graphics singleton.
+	
+	@const	EVENT_RESIZE
 */
 class MOAIGfxDevice :
 	public MOAIGlobalClass < MOAIGfxDevice, MOAIGlobalEventSource > {
@@ -96,16 +98,14 @@ private:
 	USMatrix4x4		mCpuVertexTransformMtx; // composition of matrices to be applied via CPU
 	bool			mCpuVertexTransformCache [ TOTAL_VTX_TRANSFORMS ];
 	USMatrix4x4		mCpuVertexTransformCacheMtx [ TOTAL_VTX_TRANSFORMS ]; // composition of VIEW and PROJ matrices via CPU
-		
+
 	bool			mCpuUVTransform;
 	
 	GLuint			mDefaultFrameBuffer;
 	float			mDeviceScale;
 
-	u32				mDpi;
 	u32				mDrawCount;
 	bool			mHasContext;
-	u32				mHeight;
 
 	bool			mIsFramebufferSupported;
 	bool			mIsOpenGLES;
@@ -147,13 +147,17 @@ private:
 	USMatrix4x4		mUVTransform;
 
 	const MOAIVertexFormat*	mVertexFormat;
+	void* mVertexFormatBuffer;
 
 	u32				mVertexMtxInput;
 	u32				mVertexMtxOutput;
 	USMatrix4x4		mVertexTransforms [ TOTAL_VTX_TRANSFORMS ];
+	USMatrix4x4		mBillboardMtx;
 	USRect			mViewRect;
 
 	u32				mWidth;
+	u32				mHeight;
+	bool			mLandscape;
 
 	USFrustum		mViewVolume;
 	
@@ -176,12 +180,13 @@ private:
 	void					GpuMultMatrix			( const USMatrix4x4& mtx ) const;
 	void					InsertGfxResource		( MOAIGfxResource& resource );
 	void					RemoveGfxResource		( MOAIGfxResource& resource );
+	void					TransformAndWriteQuad	( USVec4D* vtx, USVec2D* uv );
 	void					UpdateFinalColor		();
 	void					UpdateCpuVertexMtx		();
 	void					UpdateGpuVertexMtx		();
 	void					UpdateUVMtx				();
+	USRect					WndRectToDevice			( USRect rect ) const;
 	
-
 public:
 	
 	friend class MOAIGfxResource;
@@ -203,6 +208,8 @@ public:
 	GET ( USColorVec, FinalColor, mFinalColor )
 	GET ( USColorVec, PenColor, mPenColor )
 	
+	GET_SET ( bool, Landscape, mLandscape )
+	
 	//----------------------------------------------------------------//
 	void					BeginDrawing			();
 	void					BeginLayer				();
@@ -215,22 +222,26 @@ public:
 	void					EndPrim					();
 	void					Flush					();
 	
-	USColorVec				GetAmbientColor			() const;
+	const USMatrix4x4&		GetBillboardMtx			() const;
 	
 	float					GetDeviceScale			();
-	u32						GetDpi					() const;
 	u32						GetDrawCount			() const { return mDrawCount; }
 	cc8*					GetErrorString			( int error ) const;
 	
 	u32						GetHeight				() const;
 	
-	USRect					GetRect					() const;
-	USMatrix4x4				GetUVTransform			() const;
-	USMatrix4x4				GetVertexTransform		( u32 id ) const;
+	USMatrix4x4				GetNormToWndMtx			() const;
 	
+	USRect					GetRect					() const;
+	const USMatrix4x4&		GetUVTransform			() const;
+	const USMatrix4x4&		GetVertexTransform		( u32 id ) const;
 	USMatrix4x4				GetViewProjMtx			() const;
 
 	u32						GetWidth				() const;
+	
+	USMatrix4x4				GetWorldToWndMtx		() const;
+	USMatrix4x4				GetWndToNormMtx			() const;
+	USMatrix4x4				GetWndToWorldMtx		() const;
 	
 	u32						LogErrors				();
 	
@@ -255,6 +266,9 @@ public:
 	void					SetAmbientColor			( const USColorVec& colorVec );
 	void					SetAmbientColor			( float r, float g, float b, float a );
 	
+	void					SetBillboardMtx			();
+	void					SetBillboardMtx			( const USMatrix4x4& mtx );
+	
 	void					SetBlendMode			();
 	void					SetBlendMode			( const MOAIBlendMode& blendMode );
 	void					SetBlendMode			( int srcFactor, int dstFactor );
@@ -271,7 +285,6 @@ public:
 	void					SetDepthMask			( bool depthMask );
 	
 	void					SetDeviceScale			( float scale );
-	void					SetDpi					( int dpi );
 	void					SetFrameBuffer			( MOAIFrameBuffer* frameBuffer );
 	bool					SetGfxState				( MOAIGfxState* gfxState );
 	void					SetPenColor				( u32 color );
@@ -281,7 +294,7 @@ public:
 	void					SetPointSize			( float pointSize );
 	void					SetPrimType				( u32 primType );
 	void					SetScissorRect			();
-	void					SetScissorRect			( const USRect& rect );
+	void					SetScissorRect			( USRect rect );
 	void					SetScreenSpace			( MOAIViewport& viewport );
 	void					SetShader				( MOAIShader* shader = 0 );
 	void					SetShaderPreset			( u32 preset );
@@ -297,6 +310,7 @@ public:
 	
 	void					SetVertexFormat			();
 	void					SetVertexFormat			( const MOAIVertexFormat& format );
+	void					SetVertexFormat			( const MOAIVertexFormat& format, void* buffer );
 	void					SetVertexMtxMode		( u32 input, u32 output );
 	void					SetVertexPreset			( u32 preset );
 	void					SetVertexTransform		( u32 id );
@@ -305,21 +319,26 @@ public:
 	void					SetVertexTransformList  ( MOAITransformList* transforms );
 	
 	void					SetViewport				();
-	void					SetViewport				( const USRect& viewport );
+	void					SetViewport				( USRect rect );
 	
 	void					SoftReleaseResources	( u32 age );
 	
 	void					UpdateViewVolume		();
 	
-	void					WriteQuad				( USVec2D* vtx, USVec2D* uv );
-	void					WriteQuad				( USVec4D* vtx, USVec2D* uv );
+	void					WriteQuad				( const USVec2D* vtx, const USVec2D* uv );
+	void					WriteQuad				( const USVec2D* vtx, const USVec2D* uv, float xOff, float yOff, float zOff );
+	void					WriteQuad				( const USVec2D* vtx, const USVec2D* uv, float xOff, float yOff, float zOff, float xScale, float yScale );
+	void					WriteQuad				( const USVec2D* vtx, const USVec2D* uv, float xOff, float yOff, float zOff, float xScale, float yScale, float uOff, float vOff, float uScale, float vScale );
 	
 	//----------------------------------------------------------------//
 	template < typename TYPE >
 	inline void Write ( const TYPE& type ) {
 		
+		size_t top = this->mTop + sizeof ( TYPE );
+		assert ( top < this->mSize );
+		
 		*( TYPE* )(( size_t )this->mBuffer + this->mTop ) = type;
-		this->mTop += sizeof ( TYPE );
+		this->mTop = top;
 	}
 	
 	//----------------------------------------------------------------//

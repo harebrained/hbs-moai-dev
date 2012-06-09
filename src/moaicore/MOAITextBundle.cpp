@@ -39,7 +39,7 @@ inline unsigned long hashpjw(const char *str_param) {
 int MOAITextBundle::_load( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAITextBundle, "U" );
 	
-	MOAIDataBuffer* data = state.GetLuaObject < MOAIDataBuffer >( 2 );
+	MOAIDataBuffer* data = state.GetLuaObject < MOAIDataBuffer >( 2, false );
 	if( data )
 	{
 		lua_pushboolean(state, self->Load(data));
@@ -208,7 +208,8 @@ int MOAITextBundle::GetIndex(const char *key) {
 	int cursor0 = cursor;
 	int inc = 1 + (V % (S - 2));
 	
-	while (true) {
+	bool more = true;
+	while (more) {
 		int idx = readInt4(this->mHashOffset + 4 * cursor);
 		if( idx == 0 ) {
 			break;
@@ -263,5 +264,4 @@ const char *MOAITextBundle::Lookup(const char *key) {
 	
 	return this->GetValueString(idx);
 }
-
 

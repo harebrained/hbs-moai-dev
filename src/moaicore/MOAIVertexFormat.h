@@ -75,11 +75,13 @@ private:
 	static int		_declareWeightValue				( lua_State* L );
 	
 	//----------------------------------------------------------------//
+	bool			Bind							( void* buffer ) const;
 	void			BindFixed						( void* buffer ) const;
 	void			BindProgrammable				( void* buffer ) const;
 	static u32		GetComponentSize				( GLint size, GLenum type );
 	static u32		GetIndexForUse					( GLenum use );
 	static GLenum	GetUseForIndex					( u32 idx );
+	void			Unbind							() const;
 	void			UnbindFixed						() const;
 	void			UnbindProgrammable				() const;
 	
@@ -92,14 +94,12 @@ public:
 	GET_CONST ( u32, VertexSize, mVertexSize )
 	
 	//----------------------------------------------------------------//
-	bool			Bind							( void* buffer ) const;
 	bool			ComputeBounds					( void* buffer, u32 size, USBox& bounds );
 	void			DeclareAttribute				( GLint index, GLenum type, GLint size, GLenum use, GLboolean normalized );
 					MOAIVertexFormat				();
 					~MOAIVertexFormat				();
 	void			RegisterLuaClass				( MOAILuaState& state );
 	void			RegisterLuaFuncs				( MOAILuaState& state );
-	void			Unbind							() const;
 };
 
 #endif

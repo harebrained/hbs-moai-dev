@@ -9,7 +9,6 @@
 #include <moaicore/MOAIParticleScript.h>
 #include <moaicore/MOAIParticleState.h>
 #include <moaicore/MOAIParticleSystem.h>
-#include <moaicore/MOAIPexPlugin.h>
 
 class MOAIDataBuffer;
 
@@ -43,7 +42,7 @@ int MOAIParticleState::_clearForces ( lua_State* L ) {
 int MOAIParticleState::_pushForce ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIParticleState, "UU" )
 	
-	MOAIParticleForce* force = state.GetLuaObject < MOAIParticleForce >( 2 );
+	MOAIParticleForce* force = state.GetLuaObject < MOAIParticleForce >( 2, true );
 	if ( force ) {
 		self->PushForce ( *force );
 	}
@@ -77,7 +76,7 @@ int MOAIParticleState::_setDamping ( lua_State* L ) {
 int MOAIParticleState::_setInitScript ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIParticleState, "U" )
 
-	MOAIParticleScript* init = state.GetLuaObject < MOAIParticleScript >( 2 );
+	MOAIParticleScript* init = state.GetLuaObject < MOAIParticleScript >( 2, true );
 
 	if ( init ) {
 		init->Compile ();
@@ -120,26 +119,11 @@ int MOAIParticleState::_setMass ( lua_State* L ) {
 int MOAIParticleState::_setNext ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIParticleState, "U" )
 	
-	self->mNext = state.GetLuaObject < MOAIParticleState >( 2 );
+	self->mNext = state.GetLuaObject < MOAIParticleState >( 2, true );
 	
 	return 0;
 }
 
-//----------------------------------------------------------------//
-/**	@name	setPexPlugin
-	@text	Sets the pex particle plugin to use for initializing and updating particles.
-	
-	@in		MOAIParticleState self
-	@opt	MOAIPexPlugin plugin
-	@out	nil
-*/
-int MOAIParticleState::_setPexPlugin( lua_State* L ){
-	MOAI_LUA_SETUP ( MOAIParticleState, "U" )
-
-	self->mPexPlugin.Set ( *self, state.GetLuaObject < MOAIPexPlugin >( 2 )); 
-	
-	return 0;
-}
 //----------------------------------------------------------------//
 /**	@name	setPlugin
 	@text	Sets the particle plugin to use for initializing and updating particles.
@@ -151,7 +135,7 @@ int MOAIParticleState::_setPexPlugin( lua_State* L ){
 int MOAIParticleState::_setPlugin ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIParticleState, "U" )
 
-	self->mPlugin.Set ( *self, state.GetLuaObject < MOAIParticlePlugin >( 2 ));
+	self->mPlugin.Set ( *self, state.GetLuaObject < MOAIParticlePlugin >( 2, true ));
 	
 	return 0;
 }
@@ -167,7 +151,7 @@ int MOAIParticleState::_setPlugin ( lua_State* L ) {
 int MOAIParticleState::_setRenderScript ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAIParticleState, "U" )
 
-	MOAIParticleScript* render = state.GetLuaObject < MOAIParticleScript >( 2 );
+	MOAIParticleScript* render = state.GetLuaObject < MOAIParticleScript >( 2, true );
 
 	if ( render ) {
 		render->Compile ();
@@ -247,13 +231,9 @@ void MOAIParticleState::InitParticle ( MOAIParticleSystem& system, MOAIParticle&
 	}
 	
 	MOAIParticlePlugin* plugin = this->mPlugin;
-	if ( plugin && plugin->mInitFunc ) {
-		plugin->mInitFunc ( particle.mData, &particle.mData [ MOAIParticle::TOTAL_PARTICLE_REG ]);
+	if ( plugin ) {
+		plugin->OnInit ( particle.mData, &particle.mData [ MOAIParticle::TOTAL_PARTICLE_REG ]);
 	}
-
-	MOAIPexPlugin* pex = this->mPexPlugin;
-	if( pex )
-		pex->InitFunc( particle.mData, &particle.mData [ MOAIParticle::TOTAL_PARTICLE_REG ]);
 	
 	particle.mAge = 0.0f;
 	particle.mTerm = USFloat::Rand ( this->mTermRange [ 0 ], this->mTermRange [ 1 ]);
@@ -283,7 +263,6 @@ MOAIParticleState::~MOAIParticleState () {
 	
 	this->mInit.Set ( *this, 0 );
 	this->mRender.Set ( *this, 0 );
-	this->mPexPlugin.Set (*this, 0);
 	this->mPlugin.Set ( *this, 0 );
 }
 
@@ -312,7 +291,6 @@ void MOAIParticleState::RegisterLuaFuncs ( MOAILuaState& state ) {
 		{ "setDamping",				_setDamping },
 		{ "setInitScript",			_setInitScript },
 		{ "setMass",				_setMass },
-		{ "setPexPlugin",			_setPexPlugin },
 		{ "setPlugin",				_setPlugin },
 		{ "setNext",				_setNext },
 		{ "setRenderScript",		_setRenderScript },
@@ -360,18 +338,10 @@ void MOAIParticleState::ProcessParticle ( MOAIParticleSystem& system, MOAIPartic
 	}
 	
 	MOAIParticlePlugin* plugin = this->mPlugin;
-	if ( plugin && plugin->mRenderFunc ) {
+	if ( plugin ) {
 		
 		AKUParticleSprite sprite;
-		plugin->mRenderFunc ( particle.mData, &particle.mData [ MOAIParticle::TOTAL_PARTICLE_REG ], &sprite, t0, t1 );
-		system.PushSprite ( sprite );
-	}
-
-	MOAIPexPlugin* pex = this->mPexPlugin;
-	if( pex )
-	{
-		AKUParticleSprite sprite;
-		pex->RenderFunc( particle.mData, &particle.mData [ MOAIParticle::TOTAL_PARTICLE_REG ], &sprite, t0, t1,  particle.mTerm );
+		plugin->OnRender ( particle.mData, &particle.mData [ MOAIParticle::TOTAL_PARTICLE_REG ], &sprite, t0, t1, particle.mTerm );
 		system.PushSprite ( sprite );
 	}
 
