@@ -271,7 +271,7 @@ double AKUGetSimStep () {
 }
 
 //----------------------------------------------------------------//
-char* AKUGetWorkingDirectory ( char* buffer, int length ) {
+const char* AKUGetWorkingDirectory ( char* buffer, int length ) {
 
 	return zl_getcwd ( buffer, length );
 }
