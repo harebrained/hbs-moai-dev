@@ -73,7 +73,7 @@ int MOAITransformList::_setTransform ( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAITransformList, "UN" )
 	
 	u32 idx						= state.GetValue < u32 >( 2, 1 ) - 1;
-	MOAITransform* transform	= state.GetLuaObject < MOAITransform >( 3 );
+	MOAITransform* transform	= state.GetLuaObject < MOAITransform >( 3, true );
 	
 	self->SetTransform ( idx, transform );
 	

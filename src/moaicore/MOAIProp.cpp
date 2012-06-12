@@ -568,7 +568,7 @@ int MOAIProp::_setShader ( lua_State* L ) {
 int MOAIProp::_setSkeleton( lua_State *L ) {
 	MOAI_LUA_SETUP( MOAIProp, "U" )
 	
-	MOAITransformList *skeleton = state.GetLuaObject < MOAITransformList >( 2 );
+	MOAITransformList *skeleton = state.GetLuaObject < MOAITransformList >( 2, true );
 	self->SetDependentMember < MOAITransformList >( self->mSkeleton, skeleton );
 	
 	return 0;
