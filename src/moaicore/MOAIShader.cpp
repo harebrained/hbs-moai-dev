@@ -75,6 +75,7 @@ void MOAIShaderUniform::Bind () {
 			case UNIFORM_TRANSFORM:
 				glUniformMatrix4fv ( this->mAddr, 1, false, this->mBuffer );
 				break;
+				
 			case UNIFORM_WORLD_MATRIX_ARRAY_COUNT:
 				glUniform1i ( this->mAddr, this->mInt );
 				break;
@@ -356,6 +357,7 @@ void MOAIShaderUniform::SetValue ( const USMatrix4x4& value ) {
 	this->SetBuffer ( m, sizeof ( m ));
 }
 
+//----------------------------------------------------------------//
 void MOAIShaderUniform::SetValue ( MOAITransformList* transforms ) {
 
 	// Bypass the normal SetBuffer() to avoid doing an extra memcmp and memcpy.

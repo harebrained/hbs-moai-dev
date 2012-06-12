@@ -368,7 +368,7 @@ int MOAITextBox::_setHighlight ( lua_State* L ) {
 //----------------------------------------------------------------//
 /**	@name	setLineSpacing
 	@text	Sets additional space between lines in text units. '0' uses
-			the default spacing. Values must be positive.
+			the default spacing. Valus must be positive.
 
 	@in		MOAITextBox self
 	@in		number lineSpacing		Default value is 0.

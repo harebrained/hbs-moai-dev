@@ -92,8 +92,8 @@ public:
 	@const	UNIFORM_VIEW_PROJ
 	@const	UNIFORM_WORLD
 	@const	UNIFORM_WORLD_VIEW_PROJ
-	@const	UNIFORM_WORLD_MATRIX_ARRAY
-	@const	UNIFORM_WORLD_MATRIX_ARRAY_COUNT
+	@const	UNIFORM_MATRIX_ARRAY
+	@const  UNIFORM_MATRIX_ARRAY_COUNT
 */
 class MOAIShader :
 	public virtual MOAINode,
@@ -135,6 +135,7 @@ protected:
 	void			OnLoad						();
 	void			UpdatePenColor				( float r, float g, float b, float a );
 	void			UpdatePipelineTransforms	( const USMatrix4x4& world, const USMatrix4x4& view, const USMatrix4x4& proj );
+	void			UpdateWorldTransformList	( MOAITransformList *transforms );
 	bool			Validate					();
 
 public:

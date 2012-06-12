@@ -93,7 +93,6 @@ int MOAICoroutine::_run ( lua_State* L ) {
 		}
 	}
 
-	self->mIsFirstRun = true;
 	self->mNarg = lua_gettop ( state ) - 2;
 	self->mState = lua_newthread ( state );
 	self->SetLocal ( state, -1, self->mRef );

@@ -440,9 +440,7 @@ void MOAIGfxDevice::DetectContext () {
 	
 	int maxTextureUnits;
 	if ( this->mMajorVersion == 1 ) {
-#if USE_OPENGLES1
 		glGetIntegerv ( GL_MAX_TEXTURE_UNITS, &maxTextureUnits );
-#endif
 	}
 	else {
 		glGetIntegerv ( GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits );
@@ -1545,6 +1543,17 @@ void MOAIGfxDevice::SetVertexTransform ( u32 id, const USMatrix4x4& transform ) 
 			this->mVertexTransforms [ VTX_VIEW_TRANSFORM ],
 			this->mVertexTransforms [ VTX_PROJ_TRANSFORM ]
 		);
+	}
+}
+
+//----------------------------------------------------------------//
+void MOAIGfxDevice::SetVertexTransformList( MOAITransformList* transforms )
+{
+	// TODO: non-gpu skeletal animation?
+	
+	if( this->mShader )
+	{
+		this->mShader->UpdateWorldTransformList(transforms);
 	}
 }
 

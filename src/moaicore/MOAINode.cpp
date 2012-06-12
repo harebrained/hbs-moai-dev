@@ -31,7 +31,7 @@ private:
 	u32							mDestAttrID;
 
 	// cached flag indicating it's safe to pull from source to dest (attribute flags match)
-	bool						mPullable;
+	bool						 mPullable;
 
 	//----------------------------------------------------------------//
 	MOAIDepLink () :

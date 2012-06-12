@@ -143,8 +143,8 @@ protected:
 	MOAILuaSharedPtr < MOAIShader >			mShader;
 	MOAILuaSharedPtr < MOAIGfxState >		mTexture;
 	MOAILuaSharedPtr < MOAITransformBase >	mUVTransform;
-	MOAILuaSharedPtr < MOAITransformList >  mSkeleton;
 	MOAILuaSharedPtr < MOAIScissorRect >	mScissorRect;
+	MOAILuaSharedPtr < MOAITransformList >  mSkeleton;
 	
 	int										mCullMode;
 	int										mDepthTest;
