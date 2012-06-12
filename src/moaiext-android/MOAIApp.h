@@ -23,6 +23,7 @@ private:
 		BACK_BUTTON_PRESSED,
 		DID_REGISTER,
 		REMOTE_NOTIFICATION,
+		ON_PAUSE_CALLED,
 		TOTAL,
 	};
 	
@@ -86,6 +87,7 @@ public:
 	void		NotifyBillingSupported			( bool supported );
 	void		NotifyDialogDismissed			( int code );
 	void		NotifyDidRegisterNotifications	( cc8* token );
+	void		NotifyOnPauseCalled				();
 	void		NotifyOnRemoteNotification		( cc8* data );
 	void		NotifyPurchaseResponseReceived	( cc8* identifier, int code );
 	void		NotifyPurchaseStateChanged		( cc8* identifier, int code, cc8* order, cc8* notification, cc8* payload );

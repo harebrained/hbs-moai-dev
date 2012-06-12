@@ -1142,6 +1142,11 @@ static int FB_logout(lua_State *L)
 	}
 	
 	//----------------------------------------------------------------//
+	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiActivity_AKUNotifyOnPauseCalled ( JNIEnv* env, jclass obj ) {
+		MOAIApp::Get ().NotifyOnPauseCalled ();
+	}
+	
+	//----------------------------------------------------------------//
 	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiActivity_AKUNotifyDialogDismissed ( JNIEnv* env, jclass obj, jint code ) {
 		MOAIApp::Get ().NotifyDialogDismissed ( code );
 	}
