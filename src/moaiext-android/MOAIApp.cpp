@@ -205,6 +205,8 @@ void MOAIApp::RegisterLuaClass ( MOAILuaState& state ) {
 	state.SetField ( -1, "DIALOG_RESULT_NEUTRAL",				( u32 )DIALOG_RESULT_NEUTRAL );
 	state.SetField ( -1, "DIALOG_RESULT_NEGATIVE",				( u32 )DIALOG_RESULT_NEGATIVE );
 	state.SetField ( -1, "DIALOG_RESULT_CANCEL",				( u32 )DIALOG_RESULT_CANCEL );
+	
+	state.SetField (-1, "ON_PAUSE_CALLED",						( u32 )ON_PAUSE_CALLED );
 
 	luaL_Reg regTable[] = {
 		{ "checkBillingSupported",				_checkBillingSupported },
@@ -383,6 +385,17 @@ void MOAIApp::NotifyDialogDismissed ( int dialogResult ) {
 		state.DebugCall ( 1, 0 );
 		
 		mDialogCallback.Clear();
+	}
+}
+
+//----------------------------------------------------------------//
+void MOAIApp::NotifyOnPauseCalled() {
+	MOAILuaRef& callback = this->mListeners [ ON_PAUSE_CALLED ];
+	
+	if ( callback ) {
+		MOAILuaStateHandle state = callback.GetSelf ();
+
+		state.DebugCall ( 0, 1 );
 	}
 }
 
