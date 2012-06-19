@@ -1031,7 +1031,7 @@ static int FB_logout(lua_State *L)
 		mSixWavesHideCrossSellBtn = env->GetMethodID ( moaiActivityClass, "swHideCrossSellBtn", "()V" );
 		mSixWavesShowAdBanner = env->GetMethodID ( moaiActivityClass, "swShowAdBanner", "()V" );
 		mSixWavesShowCrossSellBtn = env->GetMethodID ( moaiActivityClass, "swShowCrossSellBtn", "()V" );
-		mSixWavesTrackPurchaseEvent = env->GetMethodID ( moaiActivityClass, "swTrackPurchaseEvent", "(Ljava/lang/String;FLjava/lang/String;)V" );
+		mSixWavesTrackPurchaseEvent = env->GetMethodID ( moaiActivityClass, "swTrackPurchaseEvent", "(Ljava/lang/String;F)V" );
 		mSixWavesTrackInGameItemPurchase = env->GetMethodID ( moaiActivityClass, "swTrackInGameItemPurchase", "(Ljava/lang/String;[Ljava/lang/Object;)V" );
 		mSixWavesTrackTutorialEvent = env->GetMethodID ( moaiActivityClass, "swTrackTutorialEvent", "(Ljava/lang/String;)V" );
 		{
