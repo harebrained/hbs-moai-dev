@@ -239,7 +239,7 @@ int MOAIGameCenter::_reportAchievementProgress ( lua_State* L ) {
 	@out	nil
 */
 int MOAIGameCenter::_reportScore ( lua_State* L ) {
-	if ( !MOAIGameCenter::Get ().mIsGameCenterSupported ) return 0;
+	//if ( !MOAIGameCenter::Get ().mIsGameCenterSupported ) return 0;
 	MOAILuaState state ( L );
 
 	s64 score =  ( s64 )lua_tonumber ( state, 1 );
