@@ -52,10 +52,12 @@ private:
 	
 	MOAILuaRef		mListeners [ TOTAL ];
 	MOAILuaRef 		mDialogCallback;
-	
+	bool			mRemoteTokenFetched;
+	char			mRemoteToken[PATH_MAX];
 	//----------------------------------------------------------------//
 	static int		_checkBillingSupported		( lua_State* L );
 	static int		_confirmNotification		( lua_State* L );
+	static int		_getRemoteNotificationToken ( lua_State* L );
 	static int		_openURL					( lua_State* L );
 	static int		_registerForRemoteNotifications ( lua_State* L );
 	static int		_requestPurchase			( lua_State* L );
@@ -78,6 +80,9 @@ private:
 public:
 	
 	DECL_LUA_SINGLETON ( MOAIApp )
+	
+	GET(char*,RemoteToken,mRemoteToken)
+	GET(bool,RemoteTokenFetched,mRemoteTokenFetched)
 	
 	//----------------------------------------------------------------//
 	void		DidStartSession					();

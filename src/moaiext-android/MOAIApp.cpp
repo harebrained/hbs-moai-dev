@@ -36,6 +36,19 @@ int MOAIApp::_confirmNotification ( lua_State* L ) {
 	
 	return 1;
 }
+//----------------------------------------------------------------//
+int MOAIApp::_getRemoteNotificationToken ( lua_State* L ){
+
+	MOAILuaState state ( L );
+	
+	cc8* token = MOAIApp::Get().GetRemoteToken();
+	bool isRetrieved = MOAIApp::Get().GetRemoteTokenFetched();
+	if(!isRetrieved)
+		return 0;
+	
+	lua_pushstring ( state, token );
+	return 1;
+}
 
 //----------------------------------------------------------------//
 int MOAIApp::_openURL ( lua_State* L ) {
@@ -159,7 +172,8 @@ void MOAIApp::DidStartSession () {
 
 //----------------------------------------------------------------//
 MOAIApp::MOAIApp () {
-
+	
+	mRemoteTokenFetched = false;
 	RTTI_SINGLE ( MOAILuaObject )
 }
 
@@ -211,6 +225,7 @@ void MOAIApp::RegisterLuaClass ( MOAILuaState& state ) {
 	luaL_Reg regTable[] = {
 		{ "checkBillingSupported",				_checkBillingSupported },
 		{ "confirmNotification",				_confirmNotification },
+		{ "getRemoteNotificationToken",			_getRemoteNotificationToken},
 		{ "openURL",							_openURL },
 		{ "registerForRemoteNotifications",		_registerForRemoteNotifications},
 		{ "requestPurchase",					_requestPurchase },
@@ -292,7 +307,7 @@ void MOAIApp::NotifyBillingSupported ( bool supported ) {
 
 //----------------------------------------------------------------//
 void  MOAIApp::NotifyDidRegisterNotifications ( cc8* token ){
-	MOAILuaRef& callback = this->mListeners [ DID_REGISTER ];
+	/*MOAILuaRef& callback = this->mListeners [ DID_REGISTER ];
 	
 	if ( callback ) {
 		MOAILuaStateHandle state = callback.GetSelf ();
@@ -300,7 +315,11 @@ void  MOAIApp::NotifyDidRegisterNotifications ( cc8* token ){
 		lua_pushstring ( state, token );
 			
 		state.DebugCall ( 1, 0 );
-	}
+	}*/
+	strcpy(this->mRemoteToken, token);
+	this->mRemoteTokenFetched = true;
+	//this->mRemoteToken = token;
+	
 }
 
 //----------------------------------------------------------------//
