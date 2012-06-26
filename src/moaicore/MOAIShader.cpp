@@ -71,6 +71,9 @@ void MOAIShaderUniform::Bind () {
 			
 			case UNIFORM_VIEW_PROJ:
 			case UNIFORM_WORLD:
+			case UNIFORM_VIEW:
+			case UNIFORM_PROJ:
+			case UNIFORM_WORLD_VIEW:
 			case UNIFORM_WORLD_VIEW_PROJ:
 			case UNIFORM_TRANSFORM:
 				glUniformMatrix4fv ( this->mAddr, 1, false, this->mBuffer );
@@ -135,6 +138,25 @@ void MOAIShaderUniform::BindPipelineTransforms ( const USMatrix4x4& world, const
 			this->SetValue ( world );
 			this->Bind ();
 			break;
+		}
+		case UNIFORM_VIEW: {
+			
+			this->SetValue ( view );
+			this->Bind ();
+			break;
+		}
+		case UNIFORM_PROJ: {
+			
+			this->SetValue ( proj );
+			this->Bind ();
+			break;
+		}
+		case UNIFORM_WORLD_VIEW: {
+			
+			USMatrix4x4 mtx = world;
+			mtx.Append( view );
+			this->SetValue( mtx );
+			this->Bind ();
 		}
 		case UNIFORM_WORLD_VIEW_PROJ: {
 			
@@ -202,8 +224,12 @@ void MOAIShaderUniform::SetType ( u32 type ) {
 		}
 		case UNIFORM_VIEW_PROJ:
 		case UNIFORM_WORLD:
+		case UNIFORM_VIEW:
+		case UNIFORM_PROJ:
+		case UNIFORM_WORLD_VIEW:
 		case UNIFORM_WORLD_VIEW_PROJ:
-		case UNIFORM_TRANSFORM: {
+		case UNIFORM_TRANSFORM:
+		{
 		
 			this->mBuffer.Init ( 16 );
 			
@@ -588,6 +614,22 @@ int MOAIShader::_reserveUniforms ( lua_State* L ) {
 	return 0;
 }
 
+int MOAIShader::_setUniformValue ( lua_State* L ) {
+	
+	MOAI_LUA_SETUP ( MOAIShader, "UN" )
+	
+	GLuint idx				= state.GetValue < GLuint >( 2, 1 ) - 1;
+	
+	if ( idx < self->mUniforms.Size ()) {
+		// TODO: allow setting of other uniform types...
+		if( self->mUniforms[ idx ].mType == MOAIShaderUniform::UNIFORM_FLOAT ) {
+			self->mUniforms [ idx ].SetValue ( state.GetValue < float >(3, 0) );
+		}
+	}
+	
+	return 0;
+}
+
 //----------------------------------------------------------------//
 /**	@name	setVertexAttribute
 	@text	Names a shader vertex attribute.
@@ -906,6 +948,9 @@ void MOAIShader::RegisterLuaClass ( MOAILuaState& state ) {
 	state.SetField ( -1, "UNIFORM_TRANSFORM",				( u32 )MOAIShaderUniform::UNIFORM_TRANSFORM );
 	state.SetField ( -1, "UNIFORM_VIEW_PROJ",				( u32 )MOAIShaderUniform::UNIFORM_VIEW_PROJ );
 	state.SetField ( -1, "UNIFORM_WORLD",					( u32 )MOAIShaderUniform::UNIFORM_WORLD );
+	state.SetField ( -1, "UNIFORM_VIEW",					( u32 )MOAIShaderUniform::UNIFORM_VIEW );
+	state.SetField ( -1, "UNIFORM_PROJ",					( u32 )MOAIShaderUniform::UNIFORM_PROJ );
+	state.SetField ( -1, "UNIFORM_WORLD_VIEW",				( u32 )MOAIShaderUniform::UNIFORM_WORLD_VIEW );
 	state.SetField ( -1, "UNIFORM_WORLD_VIEW_PROJ",			( u32 )MOAIShaderUniform::UNIFORM_WORLD_VIEW_PROJ );
 	state.SetField ( -1, "UNIFORM_WORLD_MATRIX_ARRAY",		( u32 )MOAIShaderUniform::UNIFORM_WORLD_MATRIX_ARRAY );
 	state.SetField ( -1, "UNIFORM_WORLD_MATRIX_ARRAY_COUNT",( u32 )MOAIShaderUniform::UNIFORM_WORLD_MATRIX_ARRAY_COUNT );
@@ -925,6 +970,7 @@ void MOAIShader::RegisterLuaFuncs ( MOAILuaState& state ) {
 		{ "declareUniformSampler",		_declareUniformSampler },
 		{ "load",						_load },
 		{ "reserveUniforms",			_reserveUniforms },
+		{ "setUniformValue",			_setUniformValue },
 		{ "setVertexAttribute",			_setVertexAttribute },
 		{ NULL, NULL }
 	};

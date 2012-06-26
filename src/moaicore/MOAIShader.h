@@ -68,6 +68,9 @@ public:
 		UNIFORM_TRANSFORM,
 		UNIFORM_VIEW_PROJ,
 		UNIFORM_WORLD,
+		UNIFORM_VIEW,
+		UNIFORM_PROJ,
+		UNIFORM_WORLD_VIEW,
 		UNIFORM_WORLD_VIEW_PROJ,
 		UNIFORM_WORLD_MATRIX_ARRAY,
 		UNIFORM_WORLD_MATRIX_ARRAY_COUNT,
@@ -120,6 +123,7 @@ protected:
 	static int		_declareUniformSampler	( lua_State* L );
 	static int		_load					( lua_State* L );
 	static int		_reserveUniforms		( lua_State* L );
+	static int		_setUniformValue		( lua_State* L );
 	static int		_setVertexAttribute		( lua_State* L );
 	
 	//----------------------------------------------------------------//
