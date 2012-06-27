@@ -269,8 +269,6 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 				  
 				lua_pop( L, 1 );
 			}
-
-			jstring keyList[table_count];
 			
 			if( table_count > 1 )
 			{
@@ -313,9 +311,9 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 					lua_pop( L, 1 );
 				}
 			}
+			env->CallVoidMethod( mMoaiActivity, mSixWavesTrackInGameItemPurchase, itemID,  items);
 		}
 
-		env->CallVoidMethod( mMoaiActivity, mSixWavesTrackInGameItemPurchase, itemID,  items);
 		env->DeleteLocalRef(itemID);
 		if( table_count > 1 )
 			env->DeleteLocalRef(items);
@@ -378,8 +376,6 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 				  
 				lua_pop( L, 1 );
 			}
-
-			jstring keyList[table_count];
 			
 			if( table_count > 1 )
 			{
@@ -421,10 +417,10 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 					count +=2;
 					lua_pop( L, 1 );
 				}
+				//Log event here
+				env->CallVoidMethod( mMoaiActivity, mMoaiFlurryLogEvent, evt, items);
 			}
 			
-			//Log event here
-			env->CallVoidMethod( mMoaiActivity, mMoaiFlurryLogEvent, evt, items);
 			if( table_count > 1 )
 				env->DeleteLocalRef(items);
 		}
