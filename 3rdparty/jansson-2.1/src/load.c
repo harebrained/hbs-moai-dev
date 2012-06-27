@@ -530,8 +530,11 @@ static int lex_scan_number(lex_t *lex, int c, json_error_t *error)
     assert(end == saved_text + lex->saved_text.length);
 
     if(errno == ERANGE && value != 0) {
-        error_set(error, lex, "real number overflow");
-        goto out;
+        // TODO: For the moment on the event of an overflow, we'll set the number to 0
+		//       to avoid killing the parser
+		//error_set(error, lex, "real number overflow");
+        //goto out;
+		value = 0;
     }
 
     lex->token = TOKEN_REAL;
