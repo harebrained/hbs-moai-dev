@@ -338,12 +338,13 @@ void AKURunBytecode ( void* data, size_t size ) {
 //----------------------------------------------------------------//
 void AKURunScript ( const char* filename ) {
 
+	string sfile = filename;
 	if ( !USFileSys::CheckFileExists ( filename )) return;
 
 	int status;
 	MOAILuaStateHandle state = MOAILuaRuntime::Get ().State ();
 	
-	status = luaL_loadfile ( state, filename );
+	status = luaL_loadfile ( state, sfile.c_str() );
 	if ( state.PrintErrors ( USLog::CONSOLE, status )) return;
 	
 	state.DebugCall ( 0, 0 );
