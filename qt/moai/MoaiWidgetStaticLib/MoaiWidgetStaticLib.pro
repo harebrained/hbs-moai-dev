@@ -1,7 +1,7 @@
 TEMPLATE = lib
 TARGET = moaiwidget_static
 DESTDIR = ../lib
-CONFIG += static release
+CONFIG += staticlib release
 
 INCLUDEPATH += ../../..
 INCLUDEPATH += ../../../src
@@ -97,8 +97,7 @@ win32{
             -lrpcrt4
 }
 
-DEFINES += MOAIWIDGETLIB
+#DEFINES += MOAIWIDGETLIB
 INCLUDEPATH += ../MoaiWidgetLib
-HEADERS += ../MoaiWidget/moaiwidget.h \
-   ../MoaiWidgetLib/MoaiWidgetLib.h
+HEADERS += ../MoaiWidget/moaiwidget.h
 SOURCES += ../MoaiWidget/moaiwidget.cpp
