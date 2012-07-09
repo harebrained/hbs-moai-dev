@@ -872,6 +872,7 @@ void MOAIApp::RegisterLuaClass ( MOAILuaState& state ) {
 	state.SetField ( -1, "PAYMENT_QUEUE_TRANSACTION",	( u32 )PAYMENT_QUEUE_TRANSACTION );
 	state.SetField ( -1, "PRODUCT_REQUEST_RESPONSE",	( u32 )PRODUCT_REQUEST_RESPONSE );
 	state.SetField ( -1, "PAYMENT_QUEUE_ERROR",			( u32 )PAYMENT_QUEUE_ERROR );
+	state.SetField ( -1, "RESTORE_TRANSACTION_COMPLETE",  ( u32 )RESTORE_TRANSACTION_COMPLETE);
 	state.SetField ( -1, "REMOTE_NOTIFICATION",			( u32 )REMOTE_NOTIFICATION );
 	state.SetField ( -1, "ASYNC_NAME_RESOLVE",			( u32 )ASYNC_NAME_RESOLVE );
 	state.SetField ( -1, "APP_OPENED_FROM_URL",			( u32 )APP_OPENED_FROM_URL );
@@ -924,6 +925,17 @@ void MOAIApp::Reset () {
 	for ( int i = 0 ; i < TOTAL; i++ ) {
 		mListeners [ i ].Clear ();
 	}
+}
+
+//----------------------------------------------------------------//
+void MOAIApp::RestoreTransactionCompletedSuccessfully(){
+	MOAILuaRef& callback = this->mListeners [ RESTORE_TRANSACTION_COMPLETE ];
+	if ( callback ) {
+		
+		MOAILuaStateHandle state = callback.GetSelf ();
+		state.DebugCall ( 0, 0 );
+	}
+	
 }
 
 //----------------------------------------------------------------//
