@@ -53,6 +53,7 @@ private:
 		PAYMENT_QUEUE_TRANSACTION,
 		PAYMENT_QUEUE_ERROR,
 		PRODUCT_REQUEST_RESPONSE,
+		RESTORE_TRANSACTION_COMPLETE,
 		REMOTE_NOTIFICATION,
 		ASYNC_NAME_RESOLVE,
 		APP_OPENED_FROM_URL,
@@ -140,6 +141,7 @@ public:
 	void		ProductsRequestDidReceiveResponse							( SKProductsRequest* request, SKProductsResponse* response );
 	void		RegisterLuaClass											( MOAILuaState& state );
 	void		Reset														();
+	void		RestoreTransactionCompletedSuccessfully						();
 	void		SetRemoteNotificationPayload								( NSDictionary* remoteNotificationPayload );
 	void		WillEndSession												();
 };

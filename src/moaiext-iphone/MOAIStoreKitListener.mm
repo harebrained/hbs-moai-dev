@@ -42,6 +42,7 @@
 	//----------------------------------------------------------------//
 	-( void ) paymentQueueRestoreCompletedTransactionsFinished:(SKPaymentQueue* )queue {
 		UNUSED ( queue );
+		MOAIApp::Get().RestoreTransactionCompletedSuccessfully();
 	}
 
 	//================================================================//
