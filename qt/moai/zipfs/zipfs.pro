@@ -51,7 +51,6 @@ INCLUDEPATH += ../../../3rdparty/lua-5.1.3/src
 INCLUDEPATH += ../../../3rdparty/luacrypto-0.2.0/src
 INCLUDEPATH += ../../../3rdparty/luacurl-1.2.1
 INCLUDEPATH += ../../../3rdparty/luafilesystem-1.5.0/src
-#INCLUDEPATH += ../../../3rdparty/luasocket-2.0.2/src
 INCLUDEPATH += ../../../3rdparty/luasql-2.2.0/src
 INCLUDEPATH += ../../../3rdparty/openssl-1.0.0d/include-win32
 INCLUDEPATH += ../../../3rdparty/ooid-0.99

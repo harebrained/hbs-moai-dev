@@ -58,10 +58,6 @@ INCLUDEPATH += ../../../3rdparty/tinyxml
 INCLUDEPATH += ../../../3rdparty/tlsf-2.0
 INCLUDEPATH += ../../../3rdparty/untz/include
 INCLUDEPATH += ../../../3rdparty/untz/src
-win32{
-    INCLUDEPATH += ../../../3rdparty/untz/src/native/win
-    INCLUDEPATH += ../../../3rdparty/rtaudio-4.0.8
-}
 INCLUDEPATH += ../../../3rdparty/zlib-1.2.3
 INCLUDEPATH += ../../../3rdparty/glew-1.5.6/include
 
@@ -77,6 +73,8 @@ SOURCES 	+= ../../../src/moaiext-untz/MOAIUntzSystem.cpp
 SOURCES 	+= ../../../src/moaiext-untz/MOAIUntzSampleBuffer.cpp
 
 win32{
+    INCLUDEPATH += ../../../3rdparty/untz/src/native/win
+    INCLUDEPATH += ../../../3rdparty/rtaudio-4.0.8
     INCLUDEPATH += ../../../3rdparty/rtaudio-4.0.8/*.cpp
     SOURCES 	+= ../../../3rdparty/untz/src/native/win/*.cpp
 }

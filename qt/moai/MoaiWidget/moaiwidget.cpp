@@ -72,20 +72,11 @@ void MoaiWidget::paintGL() {
     {
            AKURender ();
     }
-    else{
-        glClear(GL_COLOR_BUFFER_BIT);
-        glColor3f(1,0,0);
-        glBegin(GL_POLYGON);
-        glVertex2f(0,0);
-        glVertex2f(100,500);
-        glVertex2f(500,100);
-        glEnd();
-        //printf("Render. Man.");
-    }
 }
 
 void MoaiWidget::mousePressEvent(QMouseEvent *event) {
-    printf("%d, %d\n", event->x(), event->y());
+
+    AKUEnqueuePointerEvent ( QTInputDeviceID::DEVICE, QTInputDeviceSensorID::POINTER, event->x(), event->y() );
     switch( event->button())
     {
     case Qt::LeftButton:
@@ -104,6 +95,7 @@ void MoaiWidget::mousePressEvent(QMouseEvent *event) {
 }
 void MoaiWidget::mouseReleaseEvent(QMouseEvent *event){
 
+    AKUEnqueuePointerEvent ( QTInputDeviceID::DEVICE, QTInputDeviceSensorID::POINTER, event->x(), event->y() );
     switch( event->button())
     {
     case Qt::LeftButton:
@@ -122,7 +114,7 @@ void MoaiWidget::mouseReleaseEvent(QMouseEvent *event){
 }
 
 void MoaiWidget::mouseMoveEvent(QMouseEvent *event) {
-    //printf("%d, %d\n", event->x(), event->y());
+
     AKUEnqueuePointerEvent ( QTInputDeviceID::DEVICE, QTInputDeviceSensorID::POINTER, event->x(), event->y() );
     event->accept();
 }
@@ -170,7 +162,6 @@ void MoaiWidget::refreshContext(){
     AKUDetectGfxContext ();
     if(mWidth > 0 )
     {
-        printf("this could be: %d, %d", mWidth, mHeight);
         AKUSetScreenSize ( mWidth, mHeight);
         AKUSetViewSize(mWidth,mHeight);
     }
@@ -181,7 +172,7 @@ void MoaiWidget::refreshContext(){
     connect(mTimer, SIGNAL(timeout()), this, SLOT(onUpdate()) );
     mTimer->start();
     mInitialized = true;
-    printf("Intiialized\n");
+    printf("Initialized\n");
 }
 
 

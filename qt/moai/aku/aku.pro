@@ -50,7 +50,6 @@ INCLUDEPATH += ../../../3rdparty/luacurl-1.2.1
 INCLUDEPATH += ../../../3rdparty/luafilesystem-1.5.0/src
 INCLUDEPATH += ../../../3rdparty/luasocket-2.0.2/src
 INCLUDEPATH += ../../../3rdparty/luasql-2.2.0/src
-INCLUDEPATH += ../../../3rdparty/openssl-1.0.0d/include-win32
 INCLUDEPATH += ../../../3rdparty/ooid-0.99
 INCLUDEPATH += ../../../3rdparty/sqlite-3.6.16
 INCLUDEPATH += ../../../3rdparty/tinyxml
@@ -59,6 +58,10 @@ INCLUDEPATH += ../../../3rdparty/untz/include
 INCLUDEPATH += ../../../3rdparty/untz/src
 INCLUDEPATH += ../../../3rdparty/zlib-1.2.3
 INCLUDEPATH += ../../../3rdparty/glew-1.5.6/include
+
+win32{
+    INCLUDEPATH += ../../../3rdparty/openssl-1.0.0d/include-win32
+}
 
 SOURCES 	+= ../../../src/aku/pch.cpp
 SOURCES 	+= ../../../src/aku/AKU.cpp

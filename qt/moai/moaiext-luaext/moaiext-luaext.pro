@@ -71,11 +71,6 @@ win32{
 HEADERS         += ../../../3rdparty/luasocket-2.0.2/src/*.h
 
 SOURCES 	+= ../../../3rdparty/luacrypto-0.2.0/src/*.c
-#SOURCES         += ../../../3rdparty/luasocket-2.0.2/src/mime.c
-#SOURCES         += ../../../3rdparty/luasocket-2.0.2/src/luasocket.c
-#SOURCES         += ../../../3rdparty/luasocket-2.0.2/src/select.c
-#SOURCES         += ../../../3rdparty/luasocket-2.0.2/src/tcp.c
-#SOURCES         += ../../../3rdparty/luasocket-2.0.2/src/udp.c
 
 SOURCES 	+= ../../../3rdparty/luasocket-2.0.2/src/auxiliar.c
 SOURCES 	+= ../../../3rdparty/luasocket-2.0.2/src/buffer.c
