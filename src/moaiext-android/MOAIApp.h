@@ -66,6 +66,7 @@ private:
 	static int		_setMarketPublicKey			( lua_State* L );
 	static int		_share						( lua_State* L );
 	static int		_showDialog					( lua_State* L );
+	static int		_verifyTransactionSignature ( lua_State* L );
 
 	bool ( *checkBillingSupportedFunc )			( void );
 	bool ( *confirmNotificationFunc ) 			( cc8* );
@@ -76,6 +77,7 @@ private:
 	void ( *setMarketPublicKeyFunc )			( cc8* );
 	void ( *showDialogFunc )					( cc8*, cc8*, cc8*, cc8*, cc8*, bool );
 	void ( *shareFunc )							( cc8*, cc8*, cc8* );
+	bool ( *verifyTransactionFunc )				( cc8*, cc8*, cc8* );
 
 public:
 	
@@ -95,7 +97,7 @@ public:
 	void		NotifyOnPauseCalled				();
 	void		NotifyOnRemoteNotification		( cc8* data );
 	void		NotifyPurchaseResponseReceived	( cc8* identifier, int code );
-	void		NotifyPurchaseStateChanged		( cc8* identifier, int code, cc8* order, cc8* notification, cc8* payload );
+	void		NotifyPurchaseStateChanged		( cc8* identifier, int code, cc8* order, cc8* notification, cc8* data, cc8* sig, cc8* payload );
 	void		NotifyRestoreResponseReceived	( int code );
 	void		OnInit							();
 	void		RegisterLuaClass				( MOAILuaState& state );
@@ -108,6 +110,7 @@ public:
 	void		SetRestoreTransactionsFunc		( bool ( *func ) () );
 	void		SetMarketPublicKeyFunc			( void ( *func ) ( cc8* ));
 	void		SetShareFunc					( void ( *func ) ( cc8*, cc8*, cc8* ));
+	void		SetVerifyTransactionFunc		( bool ( *func ) ( cc8*, cc8*, cc8* ));
 	void		SetShowDialogFunc				( void ( *func ) ( cc8*, cc8*, cc8*, cc8*, cc8*, bool ));
 	void		WillEndSession					();
 };

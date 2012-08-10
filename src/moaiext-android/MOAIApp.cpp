@@ -153,6 +153,18 @@ int MOAIApp::_share ( lua_State* L ) {
 	
 	return 0;
 }
+//----------------------------------------------------------------//
+int MOAIApp::_verifyTransactionSignature ( lua_State* L){
+
+	MOAILuaState state ( L );
+	cc8* data = state.GetValue < cc8* >( 1, "" );
+	cc8* sig = state.GetValue < cc8* >( 2, "" );
+	cc8* key = state.GetValue < cc8* >( 3, "" );
+	
+	bool result = MOAIApp::Get ().verifyTransactionFunc ( data, sig, key );
+	lua_pushboolean ( state, result );
+	return 1;
+}
 
 //================================================================//
 // MOAIApp
@@ -234,6 +246,7 @@ void MOAIApp::RegisterLuaClass ( MOAILuaState& state ) {
 		{ "setMarketPublicKey",					_setMarketPublicKey },
 		{ "showDialog",							_showDialog },
 		{ "share",								_share },
+		{ "verifyTransactionSignature",			_verifyTransactionSignature },
 		{ NULL, NULL }
 	};
 
@@ -293,6 +306,12 @@ void MOAIApp::SetShareFunc ( void ( *func ) ( cc8*, cc8*, cc8* )) {
 }
 
 //----------------------------------------------------------------//
+void MOAIApp::SetVerifyTransactionFunc ( bool ( *func ) ( cc8*, cc8*, cc8* )) {
+	verifyTransactionFunc = func;
+}
+
+
+//----------------------------------------------------------------//
 void MOAIApp::NotifyBillingSupported ( bool supported ) {	
 	MOAILuaRef& callback = this->mListeners [ CHECK_BILLING_SUPPORTED ];
 	
@@ -350,7 +369,7 @@ void MOAIApp::NotifyPurchaseResponseReceived ( cc8* identifier, int code ) {
 }
 
 //----------------------------------------------------------------//
-void MOAIApp::NotifyPurchaseStateChanged ( cc8* identifier, int code, cc8* order, cc8* notification, cc8* payload ) {
+void MOAIApp::NotifyPurchaseStateChanged ( cc8* identifier, int code, cc8* order, cc8* notification, cc8* data, cc8* sig, cc8* payload ) {
 	MOAILuaRef& callback = this->mListeners [ PURCHASE_STATE_CHANGED ];
 	
 	if ( callback ) {
@@ -360,9 +379,11 @@ void MOAIApp::NotifyPurchaseStateChanged ( cc8* identifier, int code, cc8* order
 		lua_pushinteger ( state, code );	
 		lua_pushstring ( state, order );
 		lua_pushstring ( state, notification );
+		lua_pushstring ( state, data );
+		lua_pushstring ( state, sig );
 		lua_pushstring ( state, payload );
 		
-		state.DebugCall ( 5, 0 );
+		state.DebugCall ( 7, 0 );
 	}
 }
 

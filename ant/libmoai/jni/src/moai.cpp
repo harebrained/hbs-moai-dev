@@ -151,6 +151,7 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	jmethodID		mSetMarketPublicKeyFunc;
 	jmethodID		mShowDialogFunc;
 	jmethodID		mShareFunc;
+	jmethodID		mVerifyTransactionFunc;
 	
 	jclass			mFlurryClass;
 	jmethodID		mFlurryLogEvent;
@@ -622,6 +623,19 @@ static int FB_logout(lua_State *L)
 		env->CallVoidMethod ( mMoaiActivity , mShareFunc, jprompt, jsubject, jtext );
 	}
 	
+	//---------------------------------------------------------------//
+	bool VerifyTransaction ( const char* data , const char* sig , const char* key ) {
+		GET_ENV ();
+
+		GET_JSTRING ( data, jsdata );
+		GET_JSTRING ( sig, jsig );
+		GET_JSTRING ( key, jkey );
+		
+		bool retVal = ( bool )env->CallBooleanMethod ( mMoaiActivity , mVerifyTransactionFunc, jsdata, jsig, jkey );
+		return retVal;
+		
+	}
+	
 //================================================================//
 // Generate GUID callback
 //================================================================//
@@ -821,6 +835,7 @@ static int FB_logout(lua_State *L)
 		MOAIApp::Get ().SetRestoreTransactionsFunc( &RestoreTransactions );
 		MOAIApp::Get ().SetShowDialogFunc( &ShowDialog );
 		MOAIApp::Get ().SetShareFunc( &Share );
+		MOAIApp::Get ().SetVerifyTransactionFunc( &VerifyTransaction );
 
 		mMoaiActivity = ( jobject ) env->NewGlobalRef ( moaiActivity );
 		jclass moaiActivityClass = env->GetObjectClass ( mMoaiActivity );
@@ -834,6 +849,7 @@ static int FB_logout(lua_State *L)
 		mSetMarketPublicKeyFunc = env->GetMethodID ( moaiActivityClass, "setMarketPublicKey", "(Ljava/lang/String;)V" );
 		mShowDialogFunc = env->GetMethodID ( moaiActivityClass, "showDialog", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V" );
 		mShareFunc = env->GetMethodID ( moaiActivityClass, "share", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V" );
+		mVerifyTransactionFunc = env->GetMethodID ( moaiActivityClass, "verifyTransaction", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z" );
 
 		lua_State* state  = AKUGetLuaState();
 
@@ -928,17 +944,21 @@ static int FB_logout(lua_State *L)
 	}
 
 	//----------------------------------------------------------------//
-	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiActivity_AKUNotifyPurchaseStateChanged ( JNIEnv* env, jclass obj, jstring jidentifier, jint code, jstring jorder, jstring jnotification, jstring jpayload ) {
+	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiActivity_AKUNotifyPurchaseStateChanged ( JNIEnv* env, jclass obj, jstring jidentifier, jint code, jstring jorder, jstring jnotification, jstring jsdata, jstring jsig, jstring jpayload ) {
 		GET_CSTRING ( jidentifier, identifier );
 		GET_CSTRING ( jorder, order );
 		GET_CSTRING ( jnotification, notification );
+		GET_CSTRING ( jsdata, sdata );
+		GET_CSTRING ( jsig, signature );
 		GET_CSTRING ( jpayload, payload );
 		
-		MOAIApp::Get ().NotifyPurchaseStateChanged ( identifier, code, order, notification, payload );
+		MOAIApp::Get ().NotifyPurchaseStateChanged ( identifier, code, order, notification, sdata, signature, payload );
 
 		RELEASE_CSTRING ( jidentifier, identifier );
 		RELEASE_CSTRING ( jorder, order );
 		RELEASE_CSTRING ( jnotification, notification );
+		RELEASE_CSTRING ( jsdata, sdata );
+		RELEASE_CSTRING ( jsig, signature );
 		RELEASE_CSTRING ( jpayload, payload );
 	}
 		
