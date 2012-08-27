@@ -87,8 +87,8 @@ int ZIPFSDir_ReadZipEntry ( ZIPFSDir* self ) {
 	}
 	else if ( self->mZipFileEntry  ) {
 	
-		self->mZipFileSubDir = self->mZipFileSubDir->mNext;
-		if ( !self->mZipFileSubDir ) {
+		self->mZipFileEntry = self->mZipFileEntry->mNext;
+		if ( !self->mZipFileEntry ) {
 			self->mZipFileDir = 0;
 		}
 	}
