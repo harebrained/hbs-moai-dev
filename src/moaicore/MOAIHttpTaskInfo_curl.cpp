@@ -190,6 +190,12 @@ void MOAIHttpTaskInfo::InitForGet ( cc8* url, cc8* useragent, bool verbose, Head
 	result = curl_easy_setopt ( easyHandle, CURLOPT_SSL_VERIFYHOST, 0 );
 	_printError ( result );
 
+	result = curl_easy_setopt ( easyHandle, CURLOPT_MAXREDIRS, 5);
+	_printError ( result );
+
+	result = curl_easy_setopt ( easyHandle, CURLOPT_FOLLOWLOCATION, 1 );
+	_printError ( result );
+
 	if ( useragent ) {
 		result = curl_easy_setopt ( easyHandle, CURLOPT_USERAGENT, useragent );
 		_printError ( result );
@@ -260,6 +266,12 @@ void MOAIHttpTaskInfo::InitForPost ( cc8* url, cc8* useragent, const void* buffe
 	_printError ( result );
 	
 	result = curl_easy_setopt ( easyHandle, CURLOPT_SSL_VERIFYHOST, 0 );
+	_printError ( result );
+
+	result = curl_easy_setopt ( easyHandle, CURLOPT_MAXREDIRS, 5);
+	_printError ( result );
+
+	result = curl_easy_setopt ( easyHandle, CURLOPT_FOLLOWLOCATION, 1 );
 	_printError ( result );
 	
 	if ( useragent ) {
