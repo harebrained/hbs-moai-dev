@@ -178,6 +178,10 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	MOAILuaRef fbLoginCallback;
 	map<long, MOAILuaRef> mFBCallbackMap;
 	
+	// HBS Ads
+	jmethodID		mAdsShowBanner;
+	jmethodID		mAdsHideBanner;
+	
 	//----------------------------------------------------------------//
 	int JNI_OnLoad ( JavaVM* vm, void* reserved ) {
     
@@ -185,6 +189,22 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 		return JNI_VERSION_1_4;
 	}
 	
+//================================================================//
+//
+//----------------------------------------------------------------//
+
+static int HBS_showBanner(lua_State *L)
+{
+	GET_ENV();
+	env->CallVoidMethod( mMoaiActivity, mAdsShowBanner);
+}
+
+static int HBS_hideBanner(lua_State *L)
+{
+	GET_ENV();
+	env->CallVoidMethod( mMoaiActivity, mAdsHideBanner);
+}
+
 //================================================================//
 // Flurry Funcs
 //================================================================//
@@ -879,8 +899,7 @@ static int FB_logout(lua_State *L)
 		}
 #endif
 
-
-#ifndef DIABLE_FACEBOOK
+#ifndef DISABLE_FACEBOOK
 		// Facebook social connect
         mFBClass = env->FindClass ( "com/harebrainedschemes/news/MoaiFacebook" );
 		mFBObject = ( jobject ) env->NewGlobalRef(moaiFacebook);
@@ -902,6 +921,20 @@ static int FB_logout(lua_State *L)
 				{ NULL, NULL }
 			};
 			luaL_register( state, "FB", regTable );
+		}
+#endif
+
+
+#ifndef DISABLE_ADS
+		mAdsShowBanner = env->GetMethodID ( moaiActivityClass, "showBanner", "()V" );
+		mAdsHideBanner = env->GetMethodID ( moaiActivityClass, "hideBanner", "()V" );
+		{
+			luaL_Reg regTable [] = {
+				{ "showBanner",	HBS_showBanner },
+				{ "hideBanner", HBS_hideBanner },
+				{ NULL, NULL }
+			};
+			luaL_register( state, "HBSAds", regTable );
 		}
 #endif
 	}
