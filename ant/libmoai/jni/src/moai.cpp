@@ -181,6 +181,9 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	// HBS Ads
 	jmethodID		mAdsShowBanner;
 	jmethodID		mAdsHideBanner;
+	jmethodID		mAdsRateApp;
+	jmethodID		mAdsFeedback;
+	jmethodID		mAdsSetFeedbackData;
 	
 	//----------------------------------------------------------------//
 	int JNI_OnLoad ( JavaVM* vm, void* reserved ) {
@@ -197,12 +200,111 @@ static int HBS_showBanner(lua_State *L)
 {
 	GET_ENV();
 	env->CallVoidMethod( mMoaiActivity, mAdsShowBanner);
+	
+	return 0;
 }
 
 static int HBS_hideBanner(lua_State *L)
 {
 	GET_ENV();
 	env->CallVoidMethod( mMoaiActivity, mAdsHideBanner);
+	
+	return 0;
+}
+
+static int HBS_rateApp(lua_State *L)
+{
+	GET_ENV();
+	env->CallVoidMethod( mMoaiActivity, mAdsRateApp);
+	
+	return 0;
+}
+
+static int HBS_giveFeedback(lua_State *L)
+{
+	GET_ENV();
+	env->CallVoidMethod( mMoaiActivity, mAdsFeedback);
+	
+	return 0;
+}
+
+static int HBS_setFeedbackCustomData(lua_State *L)
+{
+	GET_ENV();
+	
+	jobjectArray items;
+	int idx = 1;
+	int table_count = 0;
+	if( lua_type(L, 1) == LUA_TTABLE )
+	{
+
+		lua_pushnil( L );
+
+		while( lua_next( L, idx)  != 0 )
+		{
+			int keyType = lua_type(L, -2);
+			int valType = lua_type(L, -1);
+
+			if(( keyType == LUA_TSTRING || keyType == LUA_TNUMBER) &&
+			  ( valType == LUA_TSTRING || valType == LUA_TNUMBER))
+			  table_count +=2;
+			  
+			lua_pop( L, 1 );
+		}
+		
+		if( table_count > 1 )
+		{
+			items = (jobjectArray)env->NewObjectArray(table_count,
+					 env->FindClass("java/lang/String"),
+					 env->NewStringUTF(""));
+			lua_pushnil( L );
+			int count = 0;
+			idx = 1;
+			while( lua_next( L, idx)  != 0 )
+			{
+				int keyType = lua_type(L, -2);
+				int valType = lua_type(L, -1);
+				if( (keyType != LUA_TSTRING && keyType != LUA_TNUMBER) || 
+					(valType != LUA_TSTRING && valType != LUA_TNUMBER))
+					continue;
+					
+				if( keyType == LUA_TSTRING )
+					env->SetObjectArrayElement( items,count,env->NewStringUTF(lua_tostring(L,-2)));
+				else
+				{
+					float value = lua_tonumber(L, -2);
+					char string[512];
+					sprintf( string, "%f", value );
+					env->SetObjectArrayElement( items,count,env->NewStringUTF(string));
+				}	
+				
+				if( valType == LUA_TSTRING )
+					env->SetObjectArrayElement( items,count+1,env->NewStringUTF(lua_tostring(L,-1)));
+				else
+				{
+					float value = lua_tonumber(L, -1);
+					char string[512];
+					sprintf( string, "%f", value );
+					env->SetObjectArrayElement( items,count+1,env->NewStringUTF(string));
+				}
+				const char *value;
+				
+				count +=2;
+				lua_pop( L, 1 );
+			}
+			//Log event here
+			env->CallVoidMethod( mMoaiActivity, mAdsSetFeedbackData, items);
+		}
+		
+		if( table_count > 1 )
+			env->DeleteLocalRef(items);
+			
+	}
+
+
+	
+		
+	return 0;
 }
 
 //================================================================//
@@ -928,10 +1030,16 @@ static int FB_logout(lua_State *L)
 #ifndef DISABLE_ADS
 		mAdsShowBanner = env->GetMethodID ( moaiActivityClass, "showBanner", "()V" );
 		mAdsHideBanner = env->GetMethodID ( moaiActivityClass, "hideBanner", "()V" );
+		mAdsRateApp  = env->GetMethodID ( moaiActivityClass, "rateApp", "()V" );
+		mAdsFeedback  = env->GetMethodID ( moaiActivityClass, "giveFeedback", "()V" );
+		mAdsSetFeedbackData = env->GetMethodID( moaiActivityClass, "setFeedbackData", "([Ljava/lang/Object;)V");
 		{
 			luaL_Reg regTable [] = {
 				{ "showBanner",	HBS_showBanner },
 				{ "hideBanner", HBS_hideBanner },
+				{ "rateApp",	HBS_rateApp },
+				{ "giveFeedback",	HBS_giveFeedback },
+				{ "setFeedbackCustomData", HBS_setFeedbackCustomData },
 				{ NULL, NULL }
 			};
 			luaL_register( state, "HBSAds", regTable );
