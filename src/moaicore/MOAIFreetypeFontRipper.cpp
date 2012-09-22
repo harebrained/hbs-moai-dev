@@ -36,7 +36,7 @@ static void		_renderSpan			( const int y, const int count, const FT_Span* const 
 //----------------------------------------------------------------//
 static bool _initializeImage ( MOAIImage& image, cc8* chars, FT_Face face ) {
 
-	int max = 1024;
+	int max = 2048;
 
 	int yMin = FT_MulFix ( face->bbox.yMin, face->size->metrics.y_scale ) >> 6;
 	int yMax = FT_MulFix ( face->bbox.yMax, face->size->metrics.y_scale ) >> 6;
@@ -52,10 +52,9 @@ static bool _initializeImage ( MOAIImage& image, cc8* chars, FT_Face face ) {
 
 	int x = 0;
 	int y = yStep;
-
-	for ( u32 i = 0; chars [ i ]; ++i ) {
-		
-		char c = chars [ i ];
+	int i = 0;
+	while( chars[i] ){	
+		u32 c = u8_nextchar( chars, &i );
 		
 		u32 index = FT_Get_Char_Index ( face, c );
 		FT_Load_Glyph ( face, index, FT_LOAD_NO_BITMAP );
@@ -80,7 +79,7 @@ static bool _initializeImage ( MOAIImage& image, cc8* chars, FT_Face face ) {
 					
 					if ( y > height ) {
 						height = height << 1;
-						if ( height >= max )
+						if ( height > max )
 							return false;
 							
 					}
