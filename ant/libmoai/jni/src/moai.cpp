@@ -184,6 +184,8 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	jmethodID		mAdsRateApp;
 	jmethodID		mAdsFeedback;
 	jmethodID		mAdsSetFeedbackData;
+	jmethodID		mAdsShowMobClixInterstitial;
+	jmethodID		mAdsShowChartboostInterstitial;
 	
 	//----------------------------------------------------------------//
 	int JNI_OnLoad ( JavaVM* vm, void* reserved ) {
@@ -227,6 +229,23 @@ static int HBS_giveFeedback(lua_State *L)
 	
 	return 0;
 }
+
+static int HBS_showMobClixInterstitial(lua_State *L)
+{
+	GET_ENV();
+	env->CallVoidMethod( mMoaiActivity, mAdsShowMobClixInterstitial);
+	
+	return 0;
+}
+
+static int HBS_showChartboostInterstitial(lua_State *L)
+{
+	GET_ENV();
+	env->CallVoidMethod( mMoaiActivity, mAdsShowChartboostInterstitial);
+	
+	return 0;
+}
+
 
 static int HBS_setFeedbackCustomData(lua_State *L)
 {
@@ -1033,6 +1052,9 @@ static int FB_logout(lua_State *L)
 		mAdsRateApp  = env->GetMethodID ( moaiActivityClass, "rateApp", "()V" );
 		mAdsFeedback  = env->GetMethodID ( moaiActivityClass, "giveFeedback", "()V" );
 		mAdsSetFeedbackData = env->GetMethodID( moaiActivityClass, "setFeedbackData", "([Ljava/lang/Object;)V");
+		mAdsShowMobClixInterstitial = env->GetMethodID ( moaiActivityClass, "showMobclixInterstitial", "()V" );
+		mAdsShowChartboostInterstitial = env->GetMethodID ( moaiActivityClass, "showChartboostInterstitial", "()V" );
+
 		{
 			luaL_Reg regTable [] = {
 				{ "showBanner",	HBS_showBanner },
@@ -1040,6 +1062,8 @@ static int FB_logout(lua_State *L)
 				{ "rateApp",	HBS_rateApp },
 				{ "giveFeedback",	HBS_giveFeedback },
 				{ "setFeedbackCustomData", HBS_setFeedbackCustomData },
+				{ "showMobClixInterstitial", HBS_showMobClixInterstitial },
+				{ "showChartboostInterstitial", HBS_showChartboostInterstitial },
 				{ NULL, NULL }
 			};
 			luaL_register( state, "HBSAds", regTable );
