@@ -1338,6 +1338,18 @@ static int FB_logout(lua_State *L)
 	}
 	
 	//----------------------------------------------------------------//
+	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiView_AKUSetLanguage ( JNIEnv* env, jclass obj, jstring jlang ) {
+		GET_CSTRING ( jlang, language );
+		//AKUSetInputDeviceTouch ( deviceId, sensorId, name );
+		lua_State* state  = AKUGetLuaState();
+		lua_newtable( state );
+		lua_pushnumber( state, 1 );
+		lua_pushstring(state, language);
+		lua_settable( state, -3 );
+		lua_setglobal( state, "PREFERRED_LANGUAGES" );
+		RELEASE_CSTRING ( jlang, language );
+	}
+	//----------------------------------------------------------------//
 	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiView_AKUUpdate ( JNIEnv* env, jclass obj ) {
 
 		InputEvent ievent;
