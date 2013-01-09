@@ -172,6 +172,10 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	jmethodID		mSixWavesTrackPurchaseEvent;
 	jmethodID		mSixWavesTrackInGameItemPurchase;
 	jmethodID		mSixWavesTrackTutorialEvent;
+	jmethodID		mSixWavesGetOfferWallPoints;
+	jmethodID		mSixWavesSpendOfferWallPoints;
+	jmethodID		mSixWavesShowOfferWall;
+	MOAILuaRef		sixWavesOfferwallCallback;
 	
 		// FB
 	jclass			mFBClass;
@@ -338,6 +342,38 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 		}
 		env->CallVoidMethod( mMoaiActivity, mSixWavesTrackTutorialEvent, eventString );
 		env->DeleteLocalRef(eventString);
+		return 0;
+	}
+	
+	static int SixWaves_getOfferWallPoints(lua_State *L)
+	{
+		GET_ENV()
+		env->CallVoidMethod( mMoaiActivity, mSixWavesGetOfferWallPoints);
+		return 0;
+	}
+	
+	static int SixWaves_spendOfferWallPoints(lua_State *L)
+	{
+		GET_ENV()
+		int value = lua_tointeger(L, 1);
+		env->CallIntMethod( mMoaiActivity, mSixWavesSpendOfferWallPoints, value );
+		return 0;
+	}
+	
+	static int SixWaves_setOfferWallCallback(lua_State *L)
+	{
+		GET_ENV()
+		MOAILuaState state ( L );
+		MOAILuaRef callback;
+		callback.SetStrongRef(state, 1);
+		sixWavesOfferwallCallback = callback;
+		return 0;
+	}
+	
+	static int SixWaves_showOfferWall(lua_State* L)
+	{
+		GET_ENV()
+		env->CallVoidMethod( mMoaiActivity, mSixWavesShowOfferWall);
 		return 0;
 	}
 	
@@ -1030,6 +1066,10 @@ static int FB_logout(lua_State *L)
 		mSixWavesTrackPurchaseEvent = env->GetMethodID ( moaiActivityClass, "swTrackPurchaseEvent", "(Ljava/lang/String;F)V" );
 		mSixWavesTrackInGameItemPurchase = env->GetMethodID ( moaiActivityClass, "swTrackInGameItemPurchase", "(Ljava/lang/String;[Ljava/lang/Object;)V" );
 		mSixWavesTrackTutorialEvent = env->GetMethodID ( moaiActivityClass, "swTrackTutorialEvent", "(Ljava/lang/String;)V" );
+		mSixWavesGetOfferWallPoints = env->GetMethodID ( moaiActivityClass, "swGetOfferWallPoints", "()V" );
+		mSixWavesSpendOfferWallPoints = env->GetMethodID ( moaiActivityClass, "swSpendOfferWallPoints", "(I)V" );
+		mSixWavesShowOfferWall = env->GetMethodID( moaiActivityClass, "swShowOfferWall", "()V");
+
 		{
 			luaL_Reg regTable [] = {
 				{ "crossSell",		SixWaves_crossSell },
@@ -1040,10 +1080,13 @@ static int FB_logout(lua_State *L)
 				{ "trackPurchaseEvent", SixWaves_trackPurchaseEvent },
 				{ "trackInGameItemPurchase", SixWaves_trackInGameItemPurchaseWithItem },
 				{ "trackTutorialEvent", SixWaves_trackTutorialEvent },
+				{ "getOfferWallPoints", SixWaves_getOfferWallPoints },
+				{ "spendOfferWallPoints", SixWaves_spendOfferWallPoints },
+				{ "setOfferWallCallback", SixWaves_setOfferWallCallback },
+				{ "showOfferWall", SixWaves_showOfferWall },
 				{ NULL, NULL }
 			};
-			
-			
+						
 			luaL_register(state, "SixWaves", regTable);
 			lua_pop(state, 1);
 		}
@@ -1412,5 +1455,15 @@ static int FB_logout(lua_State *L)
 			lua_pushstring(state, result);
 			state.DebugCall( 1 , 0 );
 			RELEASE_CSTRING ( jresult, result );
+		}
+	}
+	//----------------------------------------------------------------//
+	extern "C" void Java_@PACKAGE_UNDERSCORED@_MoaiActivity_SWavesOfferwallCallback ( JNIEnv* env, jclass obj, int jresult) {
+		MOAILuaRef& callback = sixWavesOfferwallCallback;
+		if( callback  && !callback.IsNil() ) {
+			MOAILuaStateHandle state = callback.GetSelf();
+			callback.Clear();
+			lua_pushnumber(state, jresult);
+			state.DebugCall( 1 , 0 );
 		}
 	}
