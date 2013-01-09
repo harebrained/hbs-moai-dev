@@ -9,7 +9,7 @@
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
 #import <CoreTelephony/CTCarrier.h>
 
-#import <Crittercism.h>
+//#import <Crittercism.h>
 #import <TapjoyConnect.h>
 
 #include <sys/socket.h> // Per msqr
@@ -227,9 +227,9 @@ void AKUIphoneInit ( UIApplication* application ) {
 		REGISTER_LUA_CLASS ( MOAITapjoy )
 	#endif
 
-	#ifndef DISABLE_CRITTERCISM
-		REGISTER_LUA_CLASS ( MOAICrittercism )
-	#endif
+	//#ifndef DISABLE_CRITTERCISM
+	//	REGISTER_LUA_CLASS ( MOAICrittercism )
+	//#endif
 }
 
 //-----------------------------------------------------------------//
