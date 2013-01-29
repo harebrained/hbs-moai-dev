@@ -356,7 +356,7 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	{
 		GET_ENV()
 		int value = lua_tointeger(L, 1);
-		env->CallIntMethod( mMoaiActivity, mSixWavesSpendOfferWallPoints, value );
+		env->CallVoidMethod( mMoaiActivity, mSixWavesSpendOfferWallPoints, value );
 		return 0;
 	}
 	
