@@ -171,6 +171,7 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 	jmethodID		mSixWavesShowCrossSellBtn;
 	jmethodID		mSixWavesTrackPurchaseEvent;
 	jmethodID		mSixWavesTrackInGameItemPurchase;
+	jmethodID		mSixWavesTrackTutorialStart;
 	jmethodID		mSixWavesTrackTutorialEvent;
 	jmethodID		mSixWavesGetOfferWallPoints;
 	jmethodID		mSixWavesSpendOfferWallPoints;
@@ -321,6 +322,13 @@ LockingQueue<InputEvent> *g_InputQueue = NULL;
 		env->DeleteLocalRef(itemID);
 		if( table_count > 1 )
 			env->DeleteLocalRef(items);
+		return 0;
+	}
+	
+	static int SixWaves_trackTutorialStart(lua_State *L)
+	{
+		GET_ENV()
+		env->CallVoidMethod( mMoaiActivity, mSixWavesTrackTutorialStart );
 		return 0;
 	}
 	
@@ -1065,6 +1073,7 @@ static int FB_logout(lua_State *L)
 		mSixWavesShowCrossSellBtn = env->GetMethodID ( moaiActivityClass, "swShowCrossSellBtn", "()V" );
 		mSixWavesTrackPurchaseEvent = env->GetMethodID ( moaiActivityClass, "swTrackPurchaseEvent", "(Ljava/lang/String;F)V" );
 		mSixWavesTrackInGameItemPurchase = env->GetMethodID ( moaiActivityClass, "swTrackInGameItemPurchase", "(Ljava/lang/String;[Ljava/lang/Object;)V" );
+		mSixWavesTrackTutorialStart = env->GetMethodID ( moaiActivityClass, "swTrackTutorialStart", "()V");
 		mSixWavesTrackTutorialEvent = env->GetMethodID ( moaiActivityClass, "swTrackTutorialEvent", "(Ljava/lang/String;)V" );
 		mSixWavesGetOfferWallPoints = env->GetMethodID ( moaiActivityClass, "swGetOfferWallPoints", "()V" );
 		mSixWavesSpendOfferWallPoints = env->GetMethodID ( moaiActivityClass, "swSpendOfferWallPoints", "(I)V" );
@@ -1079,6 +1088,7 @@ static int FB_logout(lua_State *L)
 				{ "showCrossSellBtn", SixWaves_showCrossSellBtn },
 				{ "trackPurchaseEvent", SixWaves_trackPurchaseEvent },
 				{ "trackInGameItemPurchase", SixWaves_trackInGameItemPurchaseWithItem },
+				{ "trackTutorialStart", SixWaves_trackTutorialStart },
 				{ "trackTutorialEvent", SixWaves_trackTutorialEvent },
 				{ "getOfferWallPoints", SixWaves_getOfferWallPoints },
 				{ "spendOfferWallPoints", SixWaves_spendOfferWallPoints },
